@@ -84,15 +84,16 @@ export const SUBMISSION_SORT_FIELDS = [
   'status',
 ] as const;
 
-/** GET /submissions. `status` may repeat (?status=A&status=B) or be comma-separated. */
+/** A status filter in a query string: repeated (?status=A&status=B) or comma-separated. */
+export const statusFilterSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value),
+  z.array(z.enum(SUBMISSION_STATUSES, { message: 'Unknown status' })),
+);
+
+/** GET /submissions. */
 export const listSubmissionsQuerySchema = paginationSchema
   .extend({
-    status: z
-      .preprocess(
-        (value) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value),
-        z.array(z.enum(SUBMISSION_STATUSES, { message: 'Unknown status' })),
-      )
-      .optional(),
+    status: statusFilterSchema.optional(),
     fromDate: dateStringSchema.optional(),
     toDate: dateStringSchema.optional(),
     search: z
