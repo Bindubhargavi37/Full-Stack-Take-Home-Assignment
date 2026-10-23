@@ -14,7 +14,7 @@ export type Theme = (typeof THEMES)[number];
 
 export const THEME_LABELS: Record<Theme, string> = {
   SYSTEM: 'System',
-  LIGHT: 'Light',
+  LIGHT: 'Pastel beige',
   DARK: 'Dark',
   CORPORATE: 'Corporate',
   EMERALD: 'Emerald',
