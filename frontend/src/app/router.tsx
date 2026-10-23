@@ -7,6 +7,8 @@ import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SubmissionCreatePage } from '@/pages/SubmissionCreatePage';
+import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage';
+import { SubmissionEditPage } from '@/pages/SubmissionEditPage';
 import { SubmissionListPage } from '@/pages/SubmissionListPage';
 import { GuestRoute } from '@/routes/GuestRoute';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
@@ -26,11 +28,15 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/submissions', element: <SubmissionListPage /> },
+          { path: '/submissions/:id', element: <SubmissionDetailPage /> },
           { path: '/profile', element: <ProfilePage /> },
           { path: '/403', element: <ForbiddenPage /> },
           {
             element: <RoleRoute allow={['AGENT']} />,
-            children: [{ path: '/submissions/new', element: <SubmissionCreatePage /> }],
+            children: [
+              { path: '/submissions/new', element: <SubmissionCreatePage /> },
+              { path: '/submissions/:id/edit', element: <SubmissionEditPage /> },
+            ],
           },
           {
             element: <RoleRoute allow={['ADMIN']} />,

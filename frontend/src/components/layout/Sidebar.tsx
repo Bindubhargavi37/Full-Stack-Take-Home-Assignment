@@ -1,5 +1,5 @@
 import { ClipboardList } from 'lucide-react';
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { NAV_ITEMS } from './navigation';
 
@@ -13,6 +13,7 @@ function closeDrawer() {
 
 export function Sidebar() {
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const items = NAV_ITEMS.filter((item) => user && item.roles.includes(user.role));
 
   return (
@@ -23,13 +24,15 @@ export function Sidebar() {
       </div>
       <nav aria-label="Main">
         <ul className="menu w-full gap-1 px-3">
-          {items.map(({ label, to, icon: Icon }) => (
+          {items.map(({ label, to, icon: Icon, activeOn }) => (
             <li key={to}>
               <NavLink
                 to={to}
                 end
                 onClick={closeDrawer}
-                className={({ isActive }) => (isActive ? 'menu-active' : '')}
+                className={({ isActive }) =>
+                  isActive || activeOn?.(pathname) ? 'menu-active' : ''
+                }
               >
                 <Icon className="size-5" aria-hidden="true" />
                 {label}
