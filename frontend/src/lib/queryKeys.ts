@@ -1,4 +1,5 @@
 import type { AgentListParams } from '@/api/agents.api';
+import type { DashboardParams } from '@/api/dashboard.api';
 import type { SubmissionListParams } from '@/api/submissions.api';
 
 // Every TanStack Query cache key in one place, so they never get mistyped.
@@ -13,4 +14,5 @@ export const queryKeys = {
   agents: ['agents'] as const,
   agentList: (params: AgentListParams) => ['agents', 'list', params] as const,
   agentOptions: ['agents', 'options'] as const,
+  dashboard: (params: DashboardParams) => ['dashboard', params] as const,
 };
