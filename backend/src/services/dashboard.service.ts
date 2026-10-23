@@ -9,7 +9,7 @@ import {
   type SubmissionStatus,
   type TestResult,
 } from 'shared';
-import { findAgent } from '../repositories/agent.repository';
+import { findAgentsByIds } from '../repositories/agent.repository';
 import * as dashboardRepository from '../repositories/dashboard.repository';
 import type { DashboardScope } from '../repositories/dashboard.repository';
 import { AppError } from '../utils/AppError';
@@ -41,24 +41,33 @@ function monthsBetween(firstDay: string, lastDay: string): string[] {
 
 /**
  * Decides whose data the dashboard shows. Agents: always their own (asking for another agent is
- * 403). Admins: all their agents, or one of them (another admin's agent is 404).
+ * 403). Admins: all their agents, or any chosen set of them; one id that isn't theirs is a 404.
  */
 async function resolveScope(user: CurrentUser, query: DashboardQuery) {
   if (user.role === 'AGENT') {
-    if (query.agentId && query.agentId !== user.id) {
+    if (query.agentIds?.some((id) => id !== user.id)) {
       throw new AppError(403, 'FORBIDDEN', 'You can only see your own dashboard');
     }
     return {
-      scope: { agentId: user.id } as DashboardScope,
+      scope: { agentIds: [user.id] } as DashboardScope,
       summaryScope: { kind: 'agent', agentId: user.id, agentName: user.fullName } as const,
     };
   }
-  if (query.agentId) {
-    const agent = await findAgent(query.agentId, user.id);
-    if (!agent) throw new AppError(404, 'NOT_FOUND', 'Agent not found');
+  if (query.agentIds?.length) {
+    const agents = await findAgentsByIds(query.agentIds, user.id);
+    if (agents.length !== query.agentIds.length) {
+      throw new AppError(404, 'NOT_FOUND', 'Agent not found');
+    }
+    const [only] = agents;
     return {
-      scope: { agentId: agent.id } as DashboardScope,
-      summaryScope: { kind: 'agent', agentId: agent.id, agentName: agent.fullName } as const,
+      scope: { agentIds: agents.map((agent) => agent.id) } as DashboardScope,
+      summaryScope:
+        agents.length === 1 && only
+          ? ({ kind: 'agent', agentId: only.id, agentName: only.fullName } as const)
+          : ({
+              kind: 'agents',
+              agents: agents.map((agent) => ({ agentId: agent.id, agentName: agent.fullName })),
+            } as const),
     };
   }
   return {
@@ -84,7 +93,7 @@ export async function getSummary(
       dashboardRepository.topLocations(scope, query),
       oneAgent
         ? dashboardRepository.countByAmountRange(scope, query)
-        : dashboardRepository.countByAgentAndStatus(user.id, query),
+        : dashboardRepository.countByAgentAndStatus(scope, query),
     ]);
 
   // --- Cards and V1 ------------------------------------------------------------------------

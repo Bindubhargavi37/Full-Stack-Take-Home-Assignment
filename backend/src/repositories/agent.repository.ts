@@ -56,6 +56,15 @@ export function findAgent(id: string, adminId: string) {
   return prisma.user.findFirst({ where: { id, ...ownAgents(adminId) }, select: agentSelect });
 }
 
+/** Those of the given ids that are this admin's agents (others are silently left out). */
+export function findAgentsByIds(ids: string[], adminId: string) {
+  return prisma.user.findMany({
+    where: { id: { in: ids }, ...ownAgents(adminId) },
+    select: { id: true, fullName: true },
+    orderBy: { fullName: 'asc' },
+  });
+}
+
 export function createAgent(
   adminId: string,
   data: { fullName: string; email: string; phone: string | null; passwordHash: string },

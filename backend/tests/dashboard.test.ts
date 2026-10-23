@@ -60,12 +60,13 @@ describe('access', () => {
 
   it("forbids an agent from asking for another agent's dashboard", async () => {
     const other = await prisma.user.findUniqueOrThrow({ where: { email: AGENT2.email } });
-    expect((await agent.get(URL).query({ agentId: other.id })).status).toBe(403);
-    expect((await agent.get(URL).query({ agentId })).status).toBe(200);
+    expect((await agent.get(URL).query({ agentIds: other.id })).status).toBe(403);
+    expect((await agent.get(URL).query({ agentIds: `${agentId},${other.id}` })).status).toBe(403);
+    expect((await agent.get(URL).query({ agentIds: agentId })).status).toBe(200);
   });
 
   it("returns 404 when an admin asks for another admin's agent, and no data for their own", async () => {
-    expect((await otherAdmin.get(URL).query({ agentId })).status).toBe(404);
+    expect((await otherAdmin.get(URL).query({ agentIds: agentId })).status).toBe(404);
     const empty = await summary(otherAdmin);
     expect(empty.cards.totalSubmissions).toBe(0);
     expect(empty.cards.collectionRate).toBeNull();
@@ -75,7 +76,8 @@ describe('access', () => {
     for (const query of [
       { fromDate: '2026-10-10', toDate: '2026-10-01' },
       { status: 'APPROVED' },
-      { agentId: 'not-a-uuid' },
+      { agentIds: 'not-a-uuid' },
+      { agentId },
       { groupBy: 'agent' },
     ]) {
       expect((await admin.get(URL).query(query)).status).toBe(400);
@@ -156,10 +158,51 @@ describe('admin dashboard', () => {
   });
 
   it("shows exactly the agent's own numbers when one agent is selected", async () => {
-    const [forAdmin, forAgent] = await Promise.all([summary(admin, { agentId }), summary(agent)]);
+    const [forAdmin, forAgent] = await Promise.all([
+      summary(admin, { agentIds: agentId }),
+      summary(agent),
+    ]);
     expect(forAdmin.scope).toMatchObject({ kind: 'agent', agentId });
     expect(forAdmin.cards).toEqual(forAgent.cards);
     expect(forAdmin.breakdown.kind).toBe('amountRanges');
+  });
+});
+
+describe('admin: several agents', () => {
+  it('combines exactly the chosen agents, with a per-agent breakdown', async () => {
+    const agent2Id = (await prisma.user.findUniqueOrThrow({ where: { email: AGENT2.email } })).id;
+    const data = await summary(admin, { agentIds: `${agentId},${agent2Id}` });
+    const want = await expected({ agentId: { in: [agentId, agent2Id] } });
+
+    expect(data.scope).toEqual({
+      kind: 'agents',
+      agents: [
+        { agentId: agent2Id, agentName: 'Priya Nair' },
+        { agentId, agentName: 'Ravi Kumar' },
+      ],
+    });
+    expect(data.cards.totalSubmissions).toBe(want.total);
+    expect(data.cards.totalBilled).toBeCloseTo(want.billed, 2);
+    expect(data.breakdown.kind).toBe('agentsByStatus');
+    if (data.breakdown.kind === 'agentsByStatus') {
+      expect(data.breakdown.agents.map((row) => row.agentId).sort()).toEqual(
+        [agentId, agent2Id].sort(),
+      );
+    }
+  });
+
+  it('accepts repeated ids and ignores duplicates', async () => {
+    const res = await admin.get(`${URL}?agentIds=${agentId}&agentIds=${agentId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.scope).toMatchObject({ kind: 'agent', agentId });
+  });
+
+  it('returns 404 when any chosen agent belongs to another admin', async () => {
+    const otherAdminRow = await prisma.user.findUniqueOrThrow({
+      where: { email: OTHER_ADMIN.email },
+    });
+    const res = await admin.get(URL).query({ agentIds: `${agentId},${otherAdminRow.id}` });
+    expect(res.status).toBe(404);
   });
 });
 
