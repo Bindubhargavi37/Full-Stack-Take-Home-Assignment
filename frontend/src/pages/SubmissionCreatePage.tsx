@@ -1,17 +1,35 @@
-import { PagePlaceholder } from '@/components/feedback/PagePlaceholder';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
+import { formatReference } from 'shared';
+import { createSubmission } from '@/api/submissions.api';
+import { SubmissionForm } from '@/features/submissions/SubmissionForm';
+import { EMPTY_SUBMISSION_FORM } from '@/features/submissions/submissionFormDefaults';
+import { queryKeys } from '@/lib/queryKeys';
 
-// Placeholder: the form is built in feature/submissions.
 export function SubmissionCreatePage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   return (
-    <PagePlaceholder
-      title="New submission"
-      description="Fill in a customer's sample details and submit them for billing."
-      plannedItems={[
-        'Customer name, location, phone and email',
-        'Total amount, amount paid and the amount due calculated live',
-        'Sample condition, test result, collected-on date and remarks',
-        'Validation on every field before the form can be submitted',
-      ]}
-    />
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">New submission</h1>
+        <p className="text-base-content/70">
+          Fields marked <span className="text-error">*</span> are required.
+        </p>
+      </div>
+      <SubmissionForm
+        defaultValues={EMPTY_SUBMISSION_FORM}
+        submitLabel="Submit"
+        cancelTo="/submissions"
+        onSubmit={async (values) => {
+          const submission = await createSubmission(values);
+          await queryClient.invalidateQueries({ queryKey: queryKeys.submissions });
+          navigate(`/submissions/${submission.id}`, {
+            state: { notice: `${formatReference(submission.referenceNo)} was submitted.` },
+          });
+        }}
+      />
+    </div>
   );
 }
