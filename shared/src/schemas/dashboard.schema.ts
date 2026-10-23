@@ -13,8 +13,17 @@ export const dashboardQuerySchema = z
     fromDate: dateStringSchema.optional(),
     toDate: dateStringSchema.optional(),
     status: statusFilterSchema.optional(),
-    /** Admin only: one of the admin's own agents. Without it, all their agents combined. */
-    agentId: uuidSchema.optional(),
+    /**
+     * Admin only: any number of the admin's own agents, combined. Without it, all their agents.
+     * Repeated (?agentIds=a&agentIds=b) or comma-separated.
+     */
+    agentIds: z
+      .preprocess(
+        (value) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value),
+        z.array(uuidSchema).max(100, 'Choose at most 100 agents'),
+      )
+      .transform((ids) => [...new Set(ids)])
+      .optional(),
   })
   .strict()
   .refine((data) => !data.fromDate || !data.toDate || data.fromDate <= data.toDate, {
@@ -59,8 +68,11 @@ export type DashboardCards = {
 
 export type DashboardSummary = {
   generatedAt: string;
-  /** Whose data this is: one agent, or all of an admin's agents. */
-  scope: { kind: 'agent'; agentId: string; agentName: string } | { kind: 'all-agents' };
+  /** Whose data this is: one agent, several chosen agents, or all of an admin's agents. */
+  scope:
+    | { kind: 'agent'; agentId: string; agentName: string }
+    | { kind: 'agents'; agents: { agentId: string; agentName: string }[] }
+    | { kind: 'all-agents' };
   cards: DashboardCards;
   /** V1. All five statuses, zero counts included. */
   byStatus: { status: SubmissionStatus; count: number }[];
@@ -76,7 +88,7 @@ export type DashboardSummary = {
   conditionVsResult: { condition: SampleCondition; counts: Record<TestResult, number> }[];
   /** V7. Grouped ignoring case and outer spaces; shown with the most common spelling. */
   topLocations: { location: string; count: number }[];
-  /** V8. One agent: order sizes. All agents: each agent's submissions by status. */
+  /** V8. One agent: order sizes. Several or all agents: each agent's submissions by status. */
   breakdown:
     | { kind: 'amountRanges'; buckets: { label: string; count: number }[] }
     | {
