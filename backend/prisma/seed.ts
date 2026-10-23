@@ -13,7 +13,7 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS ?? 12);
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
