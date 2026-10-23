@@ -27,6 +27,7 @@ export function Sidebar() {
             <li key={to}>
               <NavLink
                 to={to}
+                end
                 onClick={closeDrawer}
                 className={({ isActive }) => (isActive ? 'menu-active' : '')}
               >
