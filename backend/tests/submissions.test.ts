@@ -2,14 +2,9 @@ import type { Submission, SubmissionFormInput } from 'shared';
 import type TestAgent from 'supertest/lib/agent';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { prisma } from '../src/config/db';
-import { hashPassword } from '../src/utils/password';
-import { ADMIN, AGENT, browser, loggedIn } from './helpers';
+import { ADMIN, AGENT, AGENT2, OTHER_ADMIN, browser, ensureOtherAdmin, loggedIn } from './helpers';
 
 const BASE = '/api/v1/submissions';
-const AGENT2 = { email: 'agent2@example.com', password: 'Agent@12345' };
-// A second admin who manages no agents: must not see the first admin's data.
-const OTHER_ADMIN = { email: 'other-admin@example.com', password: 'Admin@12345' };
-
 const validForm: SubmissionFormInput = {
   customerName: 'Kavya Rao',
   location: 'Hyderabad',
@@ -30,16 +25,7 @@ let otherAdmin: TestAgent;
 let agentId: string;
 
 beforeAll(async () => {
-  await prisma.user.upsert({
-    where: { email: OTHER_ADMIN.email },
-    update: { isActive: true, failedLoginAttempts: 0, lockedUntil: null },
-    create: {
-      fullName: 'Other Admin',
-      email: OTHER_ADMIN.email,
-      role: 'ADMIN',
-      passwordHash: await hashPassword(OTHER_ADMIN.password),
-    },
-  });
+  await ensureOtherAdmin();
   [admin, agent, agent2, otherAdmin] = await Promise.all([
     loggedIn(ADMIN),
     loggedIn(AGENT),
