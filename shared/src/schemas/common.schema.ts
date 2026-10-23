@@ -14,3 +14,9 @@ export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
+
+/** Route parameter `:id`. */
+export const idParamsSchema = z.object({ id: uuidSchema });
+
+/** A calendar date sent as YYYY-MM-DD. */
+export const dateStringSchema = z.iso.date({ message: 'Enter a valid date (YYYY-MM-DD)' });
