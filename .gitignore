@@ -23,3 +23,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# Local tool settings
+.claude/
