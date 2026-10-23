@@ -9,6 +9,17 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   CLIENT_URL: z.url().default('http://localhost:5173'),
   DATABASE_URL: z.string().startsWith('postgresql://', 'DATABASE_URL must be a PostgreSQL URL'),
+
+  // Authentication
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+  ACCESS_TOKEN_TTL_MINUTES: z.coerce.number().int().positive().default(15),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
+  // Cookies are sent only over HTTPS when true. Must be true in production.
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 });
 
 const parsed = envSchema.safeParse(process.env);
