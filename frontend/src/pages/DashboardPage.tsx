@@ -32,12 +32,12 @@ const URL_KEYS: Record<keyof DashboardFilterValues, string> = {
   fromDate: 'from',
   toDate: 'to',
   status: 'status',
-  agentId: 'agentId',
+  agentIds: 'agentIds',
 };
 
 /**
- * One page for both roles. Agents see their own numbers; admins see all their agents combined
- * or one agent. Every number is computed on the server for that scope.
+ * One page for both roles. Agents see their own numbers; admins see all their agents combined,
+ * or any agents they choose. Every number is computed on the server for that scope.
  */
 export function DashboardPage() {
   const { user } = useAuth();
@@ -51,13 +51,14 @@ export function DashboardPage() {
     fromDate: searchParams.get(URL_KEYS.fromDate) ?? '',
     toDate: searchParams.get(URL_KEYS.toDate) ?? '',
     status: searchParams.get(URL_KEYS.status) ?? '',
-    agentId: isAdmin ? (searchParams.get(URL_KEYS.agentId) ?? '') : '',
+    agentIds: isAdmin ? (searchParams.get(URL_KEYS.agentIds) ?? '') : '',
   };
   const params = {
     ...dateRangeFor(filters.range, filters),
     status: filters.status,
-    agentId: filters.agentId,
+    agentIds: filters.agentIds,
   };
+  const chosenAgents = filters.agentIds ? filters.agentIds.split(',') : [];
 
   const agentOptions = useQuery({
     queryKey: queryKeys.agentOptions,
@@ -84,11 +85,15 @@ export function DashboardPage() {
     });
   }
 
-  /** Opens the submissions list with the same filters (and a status, for status cards). */
+  /**
+   * Opens the submissions list with the same filters (and a status, for status cards). The list
+   * filters by one agent at most, so with several agents chosen the cards aren't links.
+   */
   function listLink(status?: SubmissionStatus) {
+    if (chosenAgents.length > 1) return undefined;
     const query = new URLSearchParams();
     if (status ?? filters.status) query.set('status', status ?? filters.status);
-    if (filters.agentId) query.set('agentId', filters.agentId);
+    if (chosenAgents[0]) query.set('agentId', chosenAgents[0]);
     if (params.fromDate) query.set('fromDate', params.fromDate);
     if (params.toDate) query.set('toDate', params.toDate);
     const search = query.toString();
@@ -99,9 +104,11 @@ export function DashboardPage() {
     ? ''
     : data.scope.kind === 'all-agents'
       ? 'All your agents combined'
-      : isAdmin
-        ? `${data.scope.agentName}'s submissions`
-        : 'Your submissions and billing';
+      : data.scope.kind === 'agents'
+        ? `${data.scope.agents.map((agent) => agent.agentName).join(', ')} combined`
+        : isAdmin
+          ? `${data.scope.agentName}'s submissions`
+          : 'Your submissions and billing';
 
   return (
     <div className="space-y-4">
