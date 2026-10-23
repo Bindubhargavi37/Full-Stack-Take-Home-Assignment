@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'server/prisma/migrations/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'backend/prisma/migrations/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -24,7 +24,7 @@ export default tseslint.config(
   },
   {
     files: [
-      'server/**/*.ts',
+      'backend/**/*.ts',
       'shared/**/*.ts',
       'scripts/**/*.{js,ts}',
       '*.config.{js,mjs,ts}',
@@ -33,7 +33,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['client/**/*.{ts,tsx}'],
+    files: ['frontend/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
     rules: {

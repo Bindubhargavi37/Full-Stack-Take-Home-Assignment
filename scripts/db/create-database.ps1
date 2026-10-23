@@ -1,15 +1,15 @@
-# Creates the app's PostgreSQL role and database from DATABASE_URL in server/.env.
+# Creates the app's PostgreSQL role and database from DATABASE_URL in backend/.env.
 # Prompts for the postgres superuser password. Usage (from the repo root): npm run db:create
 
 $ErrorActionPreference = 'Stop'
 
-$envFile = Join-Path $PSScriptRoot '..\..\server\.env'
+$envFile = Join-Path $PSScriptRoot '..\..\backend\.env'
 if (-not (Test-Path $envFile)) {
-  throw "server/.env not found. Copy server/.env.example to server/.env and fill it in first."
+  throw "backend/.env not found. Copy backend/.env.example to backend/.env and fill it in first."
 }
 
 $line = Get-Content $envFile | Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } | Select-Object -First 1
-if (-not $line) { throw 'DATABASE_URL is missing from server/.env.' }
+if (-not $line) { throw 'DATABASE_URL is missing from backend/.env.' }
 
 $url = ($line -replace '^\s*DATABASE_URL\s*=\s*', '').Trim().Trim('"')
 if ($url -notmatch '^postgres(?:ql)?://([^:]+):([^@]+)@([^:/]+)(?::(\d+))?/([^?]+)') {
