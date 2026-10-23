@@ -10,11 +10,17 @@ jobs:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     env:
-      # Tests don't need a real database; the health check reports it as "down".
+      # Tests create and use "ci_test" on the PostgreSQL that ships with the runner (no Docker).
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+      JWT_ACCESS_SECRET: ci-only-secret-that-is-at-least-32-characters
       PRISMA_HIDE_UPDATE_MESSAGE: '1'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "CREATE ROLE ci LOGIN PASSWORD 'ci' CREATEDB;"
 
       - uses: actions/setup-node@v4
         with:
