@@ -9,7 +9,14 @@ import {
   type SubmissionStatus,
   type TestResult,
 } from '../constants/submission';
-import { dateStringSchema, paginationSchema, uuidSchema } from './common.schema';
+import {
+  dateStringSchema,
+  optionalPhoneSchema,
+  optionalText,
+  paginationSchema,
+  personNameSchema,
+  uuidSchema,
+} from './common.schema';
 
 export const MAX_AMOUNT = 10_000_000;
 
@@ -22,17 +29,6 @@ function money(label: string) {
     .refine(hasAtMostTwoDecimals, `${label} can have at most 2 decimal places`);
 }
 
-/** Optional text: missing, empty or blank becomes null; anything else must pass `rule`. */
-function optional<T extends z.ZodType<unknown, string>>(rule: T) {
-  return z
-    .string()
-    .trim()
-    .transform((value) => (value === '' ? null : value))
-    .pipe(rule.nullable())
-    .nullish()
-    .transform((value) => value ?? null);
-}
-
 /** Not later than tomorrow: one day of slack so a user ahead of the server's time zone isn't blocked. */
 const notInFuture = (value: string) => new Date(value).getTime() <= Date.now() + 24 * 3_600_000;
 
@@ -42,23 +38,15 @@ const notInFuture = (value: string) => new Date(value).getTime() <= Date.now() +
  */
 export const submissionFormSchema = z
   .object({
-    customerName: z
-      .string({ message: 'Customer name is required' })
-      .trim()
-      .min(1, 'Customer name is required')
-      .min(2, 'Customer name must be at least 2 characters')
-      .max(100, 'Customer name must be at most 100 characters')
-      .regex(/^[\p{L} .'-]+$/u, "Use letters, spaces and . ' - only"),
+    customerName: personNameSchema('Customer name'),
     location: z
       .string({ message: 'Location is required' })
       .trim()
       .min(1, 'Location is required')
       .min(2, 'Location must be at least 2 characters')
       .max(150, 'Location must be at most 150 characters'),
-    customerPhone: optional(
-      z.string().regex(/^\+?[0-9]{10,15}$/, 'Enter 10–15 digits, optionally starting with +'),
-    ),
-    customerEmail: optional(
+    customerPhone: optionalPhoneSchema,
+    customerEmail: optionalText(
       z
         .string()
         .max(254, 'Email must be at most 254 characters')
@@ -73,10 +61,10 @@ export const submissionFormSchema = z
       .default(0),
     sampleCondition: z.enum(SAMPLE_CONDITIONS, { message: 'Choose the sample condition' }),
     result: z.enum(TEST_RESULTS, { message: 'Choose the test result' }),
-    collectedOn: optional(
+    collectedOn: optionalText(
       dateStringSchema.refine(notInFuture, 'Collection date cannot be in the future'),
     ),
-    remarks: optional(z.string().max(500, 'Remarks must be at most 500 characters')),
+    remarks: optionalText(z.string().max(500, 'Remarks must be at most 500 characters')),
   })
   .strict()
   .refine((data) => toPaise(data.amountPaid) <= toPaise(data.totalAmount), {
