@@ -12,6 +12,8 @@ export const SORT_OPTIONS = [
 export type FilterValues = {
   search: string;
   status: string;
+  /** Admin only. */
+  agentId: string;
   fromDate: string;
   toDate: string;
   sort: string;
