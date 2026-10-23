@@ -6,16 +6,16 @@ import { prisma } from '../config/db';
 // Every query shares the same FROM/WHERE, so all charts describe exactly the same submissions.
 // Counts are cast to int and money to float8 so they arrive as plain JavaScript numbers.
 
-/** Whose submissions: one agent's, or every agent of one admin. */
-export type DashboardScope = { agentId: string } | { adminId: string };
+/** Whose submissions: the given agents' (one or more), or every agent of one admin. */
+export type DashboardScope = { agentIds: string[] } | { adminId: string };
 
 const DAY = 86_400_000;
 const FROM = Prisma.sql`FROM submissions s JOIN users u ON u.id = s.agent_id`;
 
 function whereClause(scope: DashboardScope, query: DashboardQuery, extra: Prisma.Sql[] = []) {
   const conditions: Prisma.Sql[] = [
-    'agentId' in scope
-      ? Prisma.sql`s.agent_id = ${scope.agentId}::uuid`
+    'agentIds' in scope
+      ? Prisma.sql`s.agent_id IN (${Prisma.join(scope.agentIds.map((id) => Prisma.sql`${id}::uuid`))})`
       : Prisma.sql`u.admin_id = ${scope.adminId}::uuid`,
   ];
   if (query.status?.length) {
@@ -104,11 +104,11 @@ export function countByAmountRange(scope: DashboardScope, query: DashboardQuery)
     GROUP BY 1`;
 }
 
-export function countByAgentAndStatus(adminId: string, query: DashboardQuery) {
+export function countByAgentAndStatus(scope: DashboardScope, query: DashboardQuery) {
   return prisma.$queryRaw<{ agentId: string; agentName: string; status: string; count: number }[]>`
     SELECT u.id::text AS "agentId", u.full_name AS "agentName", s.status::text AS status,
            count(*)::int AS count
-    ${FROM} ${whereClause({ adminId }, query)}
+    ${FROM} ${whereClause(scope, query)}
     GROUP BY u.id, u.full_name, s.status
     ORDER BY u.full_name`;
 }
