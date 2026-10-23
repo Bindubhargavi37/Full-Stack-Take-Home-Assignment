@@ -1,0 +1,16 @@
+{
+  "name": "full-stack-take-home-assignment",
+  "private": true,
+  "description": "Role-based forms and metrics dashboard (Node.js + React)",
+  "workspaces": [
+    "server"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:create": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db/create-database.ps1",
+    "db:migrate": "npm run db:migrate --workspace server",
+    "db:studio": "npm run db:studio --workspace server"
+  }
+}
