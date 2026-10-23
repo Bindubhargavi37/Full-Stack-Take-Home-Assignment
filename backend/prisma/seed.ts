@@ -10,6 +10,7 @@ import {
   type TestResult,
 } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { DEFAULT_THEME } from 'shared';
 
 const prisma = new PrismaClient();
 
@@ -361,6 +362,7 @@ async function main() {
       isActive: true,
       failedLoginAttempts: 0,
       lockedUntil: null,
+      themePreference: DEFAULT_THEME,
       passwordHash: await bcrypt.hash(ADMIN.password, SALT_ROUNDS),
     },
     create: {
@@ -385,7 +387,13 @@ async function main() {
     };
     const agent = await prisma.user.upsert({
       where: { email: seedAgent.email },
-      update: { ...fields, passwordHash, failedLoginAttempts: 0, lockedUntil: null },
+      update: {
+        ...fields,
+        passwordHash,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        themePreference: DEFAULT_THEME,
+      },
       create: { ...fields, email: seedAgent.email, passwordHash },
     });
 
