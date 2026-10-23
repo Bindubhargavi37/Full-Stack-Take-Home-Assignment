@@ -1,0 +1,154 @@
+// Database schema for the role-based forms and metrics dashboard.
+// Tables and columns are snake_case in PostgreSQL (@@map / @map) and camelCase in code.
+// CHECK constraints and the generated amount_due column are added in the migration SQL,
+// because Prisma's schema language cannot express them.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+
+  @@map("user_role")
+}
+
+enum SubmissionStatus {
+  NOT_FILLED_COMPLETELY
+  BILLING_PAYMENT_NOT_DONE
+  BILLING_PAYMENT_DONE
+  COMPLETED
+  REJECTED
+
+  @@map("submission_status")
+}
+
+enum SampleCondition {
+  GOOD
+  OPEN
+  DAMAGED
+
+  @@map("sample_condition")
+}
+
+enum TestResult {
+  PASS
+  FAIL
+  CANNOT_BE_DECIDED
+
+  @@map("test_result")
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+
+  @@map("theme_preference")
+}
+
+/// Admins and agents. An agent belongs to exactly one admin through admin_id.
+model User {
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fullName            String          @map("full_name") @db.VarChar(100)
+  email               String          @unique(map: "uq_users_email") @db.VarChar(254)
+  passwordHash        String          @map("password_hash") @db.VarChar(255)
+  role                UserRole
+  adminId             String?         @map("admin_id") @db.Uuid
+  phone               String?         @db.VarChar(15)
+  isActive            Boolean         @default(true) @map("is_active")
+  themePreference     ThemePreference @default(SYSTEM) @map("theme_preference")
+  failedLoginAttempts Int             @default(0) @map("failed_login_attempts") @db.SmallInt
+  lockedUntil         DateTime?       @map("locked_until") @db.Timestamptz(6)
+  lastLoginAt         DateTime?       @map("last_login_at") @db.Timestamptz(6)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  admin              User?                     @relation("AdminAgents", fields: [adminId], references: [id], onDelete: Restrict, map: "fk_users_admin_id")
+  agents             User[]                    @relation("AdminAgents")
+  ownedSubmissions   Submission[]              @relation("SubmissionAgent")
+  createdSubmissions Submission[]              @relation("SubmissionCreator")
+  statusChanges      SubmissionStatusHistory[]
+  refreshTokens      RefreshToken[]
+
+  @@index([adminId], map: "idx_users_admin_id")
+  @@index([role], map: "idx_users_role")
+  @@map("users")
+}
+
+/// The form an agent fills. Required fields may be null only while the status is NOT_FILLED_COMPLETELY (draft).
+model Submission {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Shown in the UI as SUB-000123.
+  referenceNo     Int              @unique(map: "uq_submissions_reference_no") @default(autoincrement()) @map("reference_no")
+  agentId         String           @map("agent_id") @db.Uuid
+  createdById     String           @map("created_by") @db.Uuid
+  customerName    String?          @map("customer_name") @db.VarChar(100)
+  location        String?          @db.VarChar(150)
+  customerPhone   String?          @map("customer_phone") @db.VarChar(15)
+  customerEmail   String?          @map("customer_email") @db.VarChar(254)
+  totalAmount     Decimal?         @map("total_amount") @db.Decimal(12, 2)
+  amountPaid      Decimal          @default(0) @map("amount_paid") @db.Decimal(12, 2)
+  /// GENERATED ALWAYS AS (total_amount - amount_paid) STORED. Read-only: never write it.
+  amountDue       Decimal?         @default(dbgenerated("(total_amount - amount_paid)")) @map("amount_due") @db.Decimal(12, 2)
+  sampleCondition SampleCondition? @map("sample_condition")
+  result          TestResult?
+  collectedOn     DateTime?        @map("collected_on") @db.Date
+  remarks         String?          @db.VarChar(500)
+  status          SubmissionStatus @default(NOT_FILLED_COMPLETELY)
+  rejectionReason String?          @map("rejection_reason") @db.VarChar(500)
+  submittedAt     DateTime?        @map("submitted_at") @db.Timestamptz(6)
+  completedAt     DateTime?        @map("completed_at") @db.Timestamptz(6)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agent         User                      @relation("SubmissionAgent", fields: [agentId], references: [id], onDelete: Restrict, map: "fk_submissions_agent_id")
+  createdBy     User                      @relation("SubmissionCreator", fields: [createdById], references: [id], onDelete: Restrict, map: "fk_submissions_created_by")
+  statusHistory SubmissionStatusHistory[]
+
+  @@index([agentId, status], map: "idx_submissions_agent_id_status")
+  @@index([createdAt], map: "idx_submissions_created_at")
+  @@index([status], map: "idx_submissions_status")
+  @@map("submissions")
+}
+
+/// Audit trail: one row per status change.
+model SubmissionStatusHistory {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId String            @map("submission_id") @db.Uuid
+  fromStatus   SubmissionStatus? @map("from_status")
+  toStatus     SubmissionStatus  @map("to_status")
+  changedById  String            @map("changed_by") @db.Uuid
+  note         String?           @db.VarChar(500)
+  changedAt    DateTime          @default(now()) @map("changed_at") @db.Timestamptz(6)
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade, map: "fk_status_history_submission_id")
+  changedBy  User       @relation(fields: [changedById], references: [id], onDelete: Restrict, map: "fk_status_history_changed_by")
+
+  @@index([submissionId, changedAt], map: "idx_status_history_submission_id_changed_at")
+  @@map("submission_status_history")
+}
+
+/// Revocable login sessions. Only the SHA-256 hash of the token is stored.
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique(map: "uq_refresh_tokens_token_hash") @map("token_hash") @db.Char(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  userAgent String?   @map("user_agent") @db.VarChar(255)
+  ipAddress String?   @map("ip_address") @db.VarChar(45)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "fk_refresh_tokens_user_id")
+
+  @@index([userId], map: "idx_refresh_tokens_user_id")
+  @@index([expiresAt], map: "idx_refresh_tokens_expires_at")
+  @@map("refresh_tokens")
+}
