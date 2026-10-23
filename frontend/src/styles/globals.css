@@ -3,9 +3,9 @@
 /* daisyUI themes offered in the theme picker (see shared/src/constants/themes.ts). */
 @plugin 'daisyui' {
   themes:
-    light --default,
+    light,
     dark --prefersdark,
-    corporate,
+    corporate --default,
     emerald,
     cupcake,
     dracula;
@@ -13,12 +13,12 @@
 
 /*
  * The app's main look: a pastel beige palette. It replaces daisyUI's built-in "light" theme,
- * so it is the default (and what "System" uses on a light-mode computer).
+ * ("Pastel beige" in the picker; also what "System" uses on a light-mode computer).
  * Every text/background pair has a contrast of at least 4.5:1 (WCAG AA).
  */
 @plugin 'daisyui/theme' {
   name: 'light';
-  default: true;
+  default: false;
   prefersdark: false;
   color-scheme: light;
 
