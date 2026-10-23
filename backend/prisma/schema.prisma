@@ -45,10 +45,15 @@ enum TestResult {
   @@map("test_result")
 }
 
+/// daisyUI theme names offered in the theme picker (shared/src/constants/themes.ts).
 enum ThemePreference {
   LIGHT
   DARK
   SYSTEM
+  CORPORATE
+  EMERALD
+  CUPCAKE
+  DRACULA
 
   @@map("theme_preference")
 }
@@ -82,7 +87,8 @@ model User {
   @@map("users")
 }
 
-/// The form an agent fills. Required fields may be null only while the status is NOT_FILLED_COMPLETELY (draft).
+/// The form an agent fills. Required fields may be null only while the status is NOT_FILLED_COMPLETELY
+/// (sent back by the admin). The app always saves complete forms; there is no draft saving.
 model Submission {
   id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   /// Shown in the UI as SUB-000123.
@@ -113,6 +119,8 @@ model Submission {
   statusHistory SubmissionStatusHistory[]
 
   @@index([agentId, status], map: "idx_submissions_agent_id_status")
+  @@index([agentId, createdAt], map: "idx_submissions_agent_id_created_at")
+  @@index([createdById], map: "idx_submissions_created_by")
   @@index([createdAt], map: "idx_submissions_created_at")
   @@index([status], map: "idx_submissions_status")
   @@map("submissions")
@@ -132,6 +140,7 @@ model SubmissionStatusHistory {
   changedBy  User       @relation(fields: [changedById], references: [id], onDelete: Restrict, map: "fk_status_history_changed_by")
 
   @@index([submissionId, changedAt], map: "idx_status_history_submission_id_changed_at")
+  @@index([changedById], map: "idx_status_history_changed_by")
   @@map("submission_status_history")
 }
 
