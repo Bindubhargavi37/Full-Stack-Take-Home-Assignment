@@ -2,5 +2,5 @@ node_modules
 dist
 coverage
 package-lock.json
-server/prisma/migrations
+backend/prisma/migrations
 *.md

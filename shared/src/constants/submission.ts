@@ -1,4 +1,4 @@
-// Values match the PostgreSQL enums in server/prisma/schema.prisma.
+// Values match the PostgreSQL enums in backend/prisma/schema.prisma.
 
 export const SUBMISSION_STATUSES = [
   'BILLING_PAYMENT_NOT_DONE',
