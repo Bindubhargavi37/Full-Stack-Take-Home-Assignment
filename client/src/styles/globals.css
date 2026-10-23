@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+/* daisyUI themes offered in the theme picker (see shared/src/constants/themes.ts). */
+@plugin 'daisyui' {
+  themes:
+    light --default,
+    dark --prefersdark,
+    corporate,
+    emerald,
+    cupcake,
+    dracula;
+}
