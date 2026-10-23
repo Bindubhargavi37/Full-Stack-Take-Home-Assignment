@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, FilePlus2, Inbox } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { formatReference, formatRupees } from 'shared';
+import { listAgentOptions } from '@/api/agents.api';
 import { listSubmissions } from '@/api/submissions.api';
 import { SORT_OPTIONS, type FilterValues } from '@/features/submissions/listFilters';
 import { SubmissionFilters } from '@/features/submissions/SubmissionFilters';
@@ -21,6 +22,7 @@ export function SubmissionListPage() {
   const filters: FilterValues = {
     search: searchParams.get('search') ?? '',
     status: searchParams.get('status') ?? '',
+    agentId: searchParams.get('agentId') ?? '',
     fromDate: searchParams.get('fromDate') ?? '',
     toDate: searchParams.get('toDate') ?? '',
     sort: searchParams.get('sort') ?? 'newest',
@@ -33,11 +35,18 @@ export function SubmissionListPage() {
     pageSize: PAGE_SIZE,
     search: filters.search,
     status: filters.status,
+    agentId: isAdmin ? filters.agentId : '',
     fromDate: filters.fromDate,
     toDate: filters.toDate,
     sortBy: sort.sortBy,
     sortOrder: sort.sortOrder,
   };
+  // The admin's agent filter needs the list of their agents.
+  const agentOptions = useQuery({
+    queryKey: queryKeys.agentOptions,
+    queryFn: listAgentOptions,
+    enabled: isAdmin,
+  });
   const { data, isPending, isError, error, isFetching, refetch } = useQuery({
     queryKey: queryKeys.submissionList(params),
     queryFn: () => listSubmissions(params),
@@ -58,7 +67,7 @@ export function SubmissionListPage() {
   }
 
   const hasFilters = Boolean(
-    filters.search || filters.status || filters.fromDate || filters.toDate,
+    filters.search || filters.status || filters.agentId || filters.fromDate || filters.toDate,
   );
 
   return (
@@ -84,6 +93,7 @@ export function SubmissionListPage() {
         // A new key resets the search box when the filters are cleared from outside it.
         key={filters.search}
         values={filters}
+        agents={isAdmin ? (agentOptions.data ?? []) : undefined}
         // Any filter change starts again from page 1.
         onChange={(changes) => updateParams({ ...changes, page: '' })}
         onClear={() => setSearchParams(filters.sort === 'newest' ? {} : { sort: filters.sort })}

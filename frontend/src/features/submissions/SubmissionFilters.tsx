@@ -1,18 +1,22 @@
 import { Search, X } from 'lucide-react';
 import { useState } from 'react';
-import { STATUS_LABELS, SUBMISSION_STATUSES } from 'shared';
+import { STATUS_LABELS, SUBMISSION_STATUSES, type AgentOption } from 'shared';
 import { SORT_OPTIONS, type FilterValues } from './listFilters';
 
 type Props = {
   values: FilterValues;
   onChange: (changes: Partial<FilterValues>) => void;
   onClear: () => void;
+  /** Admin only: shows the agent filter. */
+  agents?: readonly AgentOption[];
 };
 
-export function SubmissionFilters({ values, onChange, onClear }: Props) {
+export function SubmissionFilters({ values, onChange, onClear, agents }: Props) {
   // Search is applied on Enter / the button, not on every key press.
   const [search, setSearch] = useState(values.search);
-  const hasFilters = Boolean(values.search || values.status || values.fromDate || values.toDate);
+  const hasFilters = Boolean(
+    values.search || values.status || values.agentId || values.fromDate || values.toDate,
+  );
 
   return (
     <div className="card bg-base-200">
@@ -42,7 +46,27 @@ export function SubmissionFilters({ values, onChange, onClear }: Props) {
           </button>
         </form>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          className={`grid gap-3 sm:grid-cols-2 ${agents ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}
+        >
+          {agents && (
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-base-content/70">Agent</span>
+              <select
+                className="select select-sm w-full"
+                value={values.agentId}
+                onChange={(event) => onChange({ agentId: event.target.value })}
+              >
+                <option value="">All agents</option>
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.fullName}
+                    {agent.isActive ? '' : ' (inactive)'}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-base-content/70">Status</span>
             <select
