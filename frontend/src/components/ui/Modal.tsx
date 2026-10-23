@@ -5,6 +5,8 @@ type ModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Wider box, for content such as an enlarged chart. */
+  wide?: boolean;
   children: ReactNode;
 };
 
@@ -12,7 +14,7 @@ type ModalProps = {
  * Accessible dialog built on the native <dialog> element (daisyUI "modal" styles).
  * The browser handles focus trapping and the Esc key; clicking the backdrop also closes it.
  */
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({ open, onClose, title, wide = false, children }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -25,7 +27,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <dialog ref={ref} className="modal" aria-labelledby={titleId} onClose={onClose}>
-      <div className="modal-box">
+      <div className={`modal-box ${wide ? 'w-11/12 max-w-5xl' : ''}`}>
         <div className="mb-2 flex items-center justify-between gap-4">
           <h2 id={titleId} className="text-lg font-semibold">
             {title}
