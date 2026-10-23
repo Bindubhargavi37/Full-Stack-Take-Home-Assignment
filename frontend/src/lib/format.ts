@@ -25,3 +25,59 @@ export function todayString(): string {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
+
+const compactRupees = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+const compactNumber = new Intl.NumberFormat('en-IN', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+const timeOnly = new Intl.DateTimeFormat('en-IN', { timeStyle: 'medium' });
+
+/** Short money for chart axes: 125000 → "₹1.3L" (Indian lakh/crore). */
+export function formatRupeesCompact(amount: number): string {
+  return compactRupees.format(amount);
+}
+
+/** Short counts for chart axes: 1200 → "1.2K". */
+export function formatCountCompact(value: number): string {
+  return compactNumber.format(value);
+}
+
+/** ISO timestamp → "2:30:05 pm". */
+export function formatTime(iso: number | string): string {
+  return timeOnly.format(new Date(iso));
+}
+
+/** "2026-10" → "Oct 2026" (UTC, so it never shifts a month). */
+export function formatMonth(value: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}-01T00:00:00.000Z`));
+}
+
+/** "2026-10-23" → "23 Oct" (UTC). */
+export function formatDayShort(value: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00.000Z`));
+}
+
+const wholeRupees = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 0,
+});
+
+/** For headline figures: 2104200.5 → "₹21,04,201" (exact paise stay in tables and tooltips). */
+export function formatRupeesWhole(amount: number): string {
+  return wholeRupees.format(amount);
+}
