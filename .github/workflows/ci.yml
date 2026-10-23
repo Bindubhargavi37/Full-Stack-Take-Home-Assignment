@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npm run db:generate -w server
+        run: npm run db:generate -w backend
 
       - name: Lint
         run: npm run lint

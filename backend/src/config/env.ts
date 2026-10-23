@@ -18,7 +18,7 @@ if (!parsed.success) {
     (issue) => `  - ${issue.path.join('.')}: ${issue.message}`,
   );
   throw new Error(
-    `Invalid environment variables:\n${problems.join('\n')}\nSee server/.env.example.`,
+    `Invalid environment variables:\n${problems.join('\n')}\nSee backend/.env.example.`,
   );
 }
 
