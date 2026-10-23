@@ -201,7 +201,7 @@ export function DashboardPage() {
             </p>
           )}
 
-          <section aria-label="Charts" className="grid gap-4 xl:grid-cols-2">
+          <section aria-label="Charts" className="grid gap-4 md:grid-cols-2">
             <StatusChart summary={data} />
             <OverTimeChart summary={data} />
             <BillingChart summary={data} />
