@@ -15,6 +15,8 @@ export function LocationsChart({ summary }: { summary: DashboardSummary }) {
     <ChartCard
       title="Top locations"
       description={`The ${TOP_LOCATIONS_LIMIT} busiest, by submissions`}
+      // Same height as "Agents by status", which sits beside it.
+      tall
       table={{ columns: ['Location', 'Submissions'], rows: rows.map((r) => [r.location, r.count]) }}
       empty={rows.length === 0}
     >

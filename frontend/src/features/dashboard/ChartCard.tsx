@@ -1,5 +1,6 @@
-import { BarChart3, Table2 } from 'lucide-react';
+import { BarChart3, Maximize2, Table2 } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
+import { Modal } from '@/components/ui/Modal';
 
 export type ChartTable = {
   columns: readonly string[];
@@ -18,7 +19,37 @@ type Props = {
   children: ReactNode;
 };
 
-/** A dashboard card holding one chart, with a Chart / Table switch. */
+function DataTable({ table }: { table: ChartTable }) {
+  return (
+    <table className="table-sm table">
+      <thead>
+        <tr>
+          {table.columns.map((column, index) => (
+            <th key={column} className={index > 0 ? 'text-right' : ''}>
+              {column}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {table.rows.map((row) => (
+          <tr key={String(row[0])}>
+            {row.map((cell, index) => (
+              <td key={index} className={index > 0 ? 'text-right tabular-nums' : ''}>
+                {cell}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/**
+ * A dashboard card holding one chart, with a Chart / Table switch and an Enlarge button that
+ * opens the same chart in a large dialog.
+ */
 export function ChartCard({
   title,
   description,
@@ -28,6 +59,7 @@ export function ChartCard({
   children,
 }: Props) {
   const [showTable, setShowTable] = useState(false);
+  const [enlarged, setEnlarged] = useState(false);
   const headingId = useId();
 
   return (
@@ -41,19 +73,30 @@ export function ChartCard({
             {description && <p className="text-base-content/70 text-sm">{description}</p>}
           </div>
           {!empty && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-xs"
-              onClick={() => setShowTable((value) => !value)}
-              aria-pressed={showTable}
-            >
-              {showTable ? (
-                <BarChart3 className="size-4" aria-hidden="true" />
-              ) : (
-                <Table2 className="size-4" aria-hidden="true" />
-              )}
-              {showTable ? 'Chart' : 'Table'}
-            </button>
+            <div className="flex shrink-0 gap-1">
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs"
+                onClick={() => setShowTable((value) => !value)}
+                aria-pressed={showTable}
+              >
+                {showTable ? (
+                  <BarChart3 className="size-4" aria-hidden="true" />
+                ) : (
+                  <Table2 className="size-4" aria-hidden="true" />
+                )}
+                {showTable ? 'Chart' : 'Table'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs btn-square"
+                onClick={() => setEnlarged(true)}
+                aria-label={`Enlarge ${title}`}
+                title="Enlarge"
+              >
+                <Maximize2 className="size-4" aria-hidden="true" />
+              </button>
+            </div>
           )}
         </div>
 
@@ -63,34 +106,23 @@ export function ChartCard({
           </p>
         ) : showTable ? (
           <div className="max-h-72 overflow-auto">
-            <table className="table-sm table">
-              <thead>
-                <tr>
-                  {table.columns.map((column, index) => (
-                    <th key={column} className={index > 0 ? 'text-right' : ''}>
-                      {column}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {table.rows.map((row) => (
-                  <tr key={String(row[0])}>
-                    {row.map((cell, index) => (
-                      <td key={index} className={index > 0 ? 'text-right tabular-nums' : ''}>
-                        {cell}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable table={table} />
           </div>
         ) : (
           // Fixed height that includes the axis labels, so the card never gets an inner scroll.
           <div className={tall ? 'h-80' : 'h-64'}>{children}</div>
         )}
       </div>
+
+      <Modal open={enlarged} onClose={() => setEnlarged(false)} title={title} wide>
+        {description && <p className="text-base-content/70 mb-3 text-sm">{description}</p>}
+        {/* Drawn only while open, so a closed dialog costs nothing. */}
+        {enlarged && (
+          <div className={`h-[65vh] min-h-80 ${showTable ? 'overflow-auto' : ''}`}>
+            {showTable ? <DataTable table={table} /> : children}
+          </div>
+        )}
+      </Modal>
     </section>
   );
 }

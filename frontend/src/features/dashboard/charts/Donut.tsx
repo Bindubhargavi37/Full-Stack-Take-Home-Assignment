@@ -37,7 +37,7 @@ export function Donut({ slices, totalLabel }: { slices: readonly Slice[]; totalL
           <span className="text-base-content/70 text-xs">{totalLabel}</span>
         </div>
       </div>
-      <ul className="w-40 shrink-0 space-y-1.5 text-sm sm:w-48">
+      <ul className="w-1/2 max-w-56 shrink-0 space-y-1.5 text-sm">
         {slices.map((slice) => (
           <li key={slice.label} className="flex items-center gap-2">
             <span
