@@ -1,4 +1,5 @@
-// daisyUI theme names offered in the theme picker. SYSTEM follows the OS light/dark setting.
+// daisyUI theme names offered in the theme picker. CORPORATE is the default;
+// SYSTEM follows the OS light/dark setting.
 
 export const THEMES = [
   'SYSTEM',
@@ -22,4 +23,4 @@ export const THEME_LABELS: Record<Theme, string> = {
   DRACULA: 'Dracula',
 };
 
-export const DEFAULT_THEME: Theme = 'SYSTEM';
+export const DEFAULT_THEME: Theme = 'CORPORATE';

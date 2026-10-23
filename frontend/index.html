@@ -11,8 +11,9 @@
         try {
           saved = localStorage.getItem('theme');
         } catch (e) {}
-        var theme =
-          !saved || saved === 'SYSTEM'
+        var theme = !saved
+          ? 'corporate'
+          : saved === 'SYSTEM'
             ? window.matchMedia('(prefers-color-scheme: dark)').matches
               ? 'dark'
               : 'light'
