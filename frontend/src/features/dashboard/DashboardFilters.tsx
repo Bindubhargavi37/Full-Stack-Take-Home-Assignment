@@ -1,4 +1,5 @@
 import { STATUS_LABELS, SUBMISSION_STATUSES, type AgentOption } from 'shared';
+import { AgentMultiSelect } from './AgentMultiSelect';
 import { DATE_PRESETS, type DatePreset } from './datePresets';
 
 export type DashboardFilterValues = {
@@ -6,13 +7,14 @@ export type DashboardFilterValues = {
   fromDate: string;
   toDate: string;
   status: string;
-  agentId: string;
+  /** Admin only: chosen agent ids, comma-separated; empty means all agents. */
+  agentIds: string;
 };
 
 type Props = {
   values: DashboardFilterValues;
   onChange: (changes: Partial<DashboardFilterValues>) => void;
-  /** Admin only: shows the agent selector. */
+  /** Admin only: shows the agent filter (any number of agents). */
   agents?: readonly AgentOption[];
 };
 
@@ -78,22 +80,11 @@ export function DashboardFilters({ values, onChange, agents }: Props) {
         </label>
 
         {agents && (
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-base-content/70">Agent</span>
-            <select
-              className="select select-sm w-full"
-              value={values.agentId}
-              onChange={(event) => onChange({ agentId: event.target.value })}
-            >
-              <option value="">All agents</option>
-              {agents.map((agent) => (
-                <option key={agent.id} value={agent.id}>
-                  {agent.fullName}
-                  {agent.isActive ? '' : ' (inactive)'}
-                </option>
-              ))}
-            </select>
-          </label>
+          <AgentMultiSelect
+            agents={agents}
+            value={values.agentIds ? values.agentIds.split(',') : []}
+            onChange={(ids) => onChange({ agentIds: ids.join(',') })}
+          />
         )}
       </div>
     </div>
