@@ -1,5 +1,5 @@
 import type { RequestHandler } from 'express';
-import type { ChangePasswordInput, UpdatePreferencesInput } from 'shared';
+import type { ChangePasswordInput, UpdatePreferencesInput, UpdateProfileValues } from 'shared';
 import * as userService from '../services/user.service';
 import { setAuthCookies } from '../utils/cookies';
 import { clientMeta } from './auth.controller';
@@ -22,5 +22,10 @@ export const updatePreferences: RequestHandler = async (req, res) => {
     req.user!.id,
     req.body as UpdatePreferencesInput,
   );
+  res.json({ success: true, data: { user } });
+};
+
+export const updateProfile: RequestHandler = async (req, res) => {
+  const user = await userService.updateProfile(req.user!, req.body as UpdateProfileValues);
   res.json({ success: true, data: { user } });
 };
