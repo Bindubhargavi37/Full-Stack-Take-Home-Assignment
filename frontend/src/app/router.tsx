@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AgentListPage } from '@/pages/AgentListPage';
-import { DashboardPage } from '@/pages/DashboardPage';
 import { ForbiddenPage } from '@/pages/ForbiddenPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -26,7 +25,13 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
-          { path: '/dashboard', element: <DashboardPage /> },
+          {
+            path: '/dashboard',
+            // Loaded on first visit, so the chart library isn't part of the main bundle.
+            lazy: async () => ({
+              Component: (await import('@/pages/DashboardPage')).DashboardPage,
+            }),
+          },
           { path: '/submissions', element: <SubmissionListPage /> },
           { path: '/submissions/:id', element: <SubmissionDetailPage /> },
           { path: '/profile', element: <ProfilePage /> },
