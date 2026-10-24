@@ -11,12 +11,6 @@ import { TextField } from '@/components/form/TextField';
 import { ThemePicker } from '@/components/layout/ThemePicker';
 import { useAuth } from '@/hooks/useAuth';
 
-// Shown only in development builds, to log in quickly with the seeded accounts.
-const DEMO_ACCOUNTS = [
-  { label: 'Fill admin demo', email: 'admin@example.com', password: 'Admin@12345' },
-  { label: 'Fill agent demo', email: 'agent1@example.com', password: 'Agent@12345' },
-];
-
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -28,7 +22,6 @@ export function LoginPage() {
     register,
     handleSubmit,
     setError,
-    setValue,
     resetField,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput, unknown, z.output<typeof loginSchema>>({
@@ -103,24 +96,6 @@ export function LoginPage() {
             <p className="text-base-content/60 text-center text-xs">
               Forgot your password? Ask your admin.
             </p>
-
-            {import.meta.env.DEV && (
-              <div className="border-base-300 flex gap-2 border-t pt-4">
-                {DEMO_ACCOUNTS.map((account) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    className="btn btn-ghost btn-xs flex-1"
-                    onClick={() => {
-                      setValue('email', account.email, { shouldValidate: true });
-                      setValue('password', account.password, { shouldValidate: true });
-                    }}
-                  >
-                    {account.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </form>
         </div>
       </main>

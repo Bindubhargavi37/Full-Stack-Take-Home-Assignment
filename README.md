@@ -169,8 +169,6 @@ Created by `npm run db:seed` (local development only):
 | Agent | `agent2@example.com` … `agent5@example.com` | `Agent@12345` | Other active agents |
 | Agent (inactive) | `agent6@example.com` | `Agent@12345` | Login is refused: shows that deactivated users are blocked |
 
-In development builds the login page also has "Fill admin demo" / "Fill agent demo" buttons.
-
 ---
 
 ## Scripts
