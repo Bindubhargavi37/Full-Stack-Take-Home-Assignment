@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { changePasswordSchema, updatePreferencesSchema } from 'shared';
+import { changePasswordSchema, updatePreferencesSchema, updateProfileSchema } from 'shared';
 import * as userController from '../controllers/user.controller';
 import { authenticate } from '../middlewares/authenticate';
 import { validate } from '../middlewares/validate';
@@ -8,6 +8,7 @@ import { validate } from '../middlewares/validate';
 export const userRouter = Router();
 
 userRouter.use(authenticate);
+userRouter.patch('/me', validate({ body: updateProfileSchema }), userController.updateProfile);
 userRouter.patch(
   '/me/password',
   validate({ body: changePasswordSchema }),
