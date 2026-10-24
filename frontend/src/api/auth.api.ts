@@ -1,4 +1,4 @@
-import type { AuthUser, ChangePasswordInput, LoginInput, Theme } from 'shared';
+import type { AuthUser, ChangePasswordInput, LoginInput, Theme, UpdateProfileValues } from 'shared';
 import { api, ApiError } from '@/lib/apiClient';
 
 export async function fetchCurrentUser(): Promise<AuthUser | null> {
@@ -30,5 +30,10 @@ export async function saveThemePreference(themePreference: Theme): Promise<AuthU
     method: 'PATCH',
     body: { themePreference },
   });
+  return user;
+}
+
+export async function updateProfile(input: UpdateProfileValues): Promise<AuthUser> {
+  const { user } = await api<{ user: AuthUser }>('/users/me', { method: 'PATCH', body: input });
   return user;
 }
