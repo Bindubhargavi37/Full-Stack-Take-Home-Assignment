@@ -37,7 +37,13 @@ function readTheme(): ChartTheme {
     dark,
     series: dark ? SERIES_DARK : SERIES_LIGHT,
     status: Object.fromEntries(
-      SUBMISSION_STATUSES.map((status) => [status, css(`--color-${STATUS_TONES[status]}`)]),
+      SUBMISSION_STATUSES.map((status) => {
+        const tone = STATUS_TONES[status];
+        // daisyUI's "neutral" is near-black in dark themes, invisible on a dark card: use its
+        // light companion colour there instead.
+        const variable = tone === 'neutral' && dark ? '--color-neutral-content' : `--color-${tone}`;
+        return [status, css(variable)];
+      }),
     ) as Record<SubmissionStatus, string>,
     surface: css('--color-base-200'),
     grid: css('--color-base-300'),
