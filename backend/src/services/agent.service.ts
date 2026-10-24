@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import type {
   Agent,
   AgentOption,
@@ -12,6 +11,7 @@ import type { AgentRecord } from '../repositories/agent.repository';
 import { revokeAllRefreshTokens } from '../repositories/refreshToken.repository';
 import { AppError } from '../utils/AppError';
 import { hashPassword } from '../utils/password';
+import { withUniqueEmail } from '../utils/uniqueEmail';
 
 function toAgent(record: AgentRecord): Agent {
   return {
@@ -24,20 +24,6 @@ function toAgent(record: AgentRecord): Agent {
     createdAt: record.createdAt.toISOString(),
     submissionCount: record._count.ownedSubmissions,
   };
-}
-
-/** Runs a write and turns the unique-email violation into a field error. */
-async function withUniqueEmail<T>(write: () => Promise<T>): Promise<T> {
-  try {
-    return await write();
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new AppError(409, 'EMAIL_TAKEN', 'This email is already in use', [
-        { field: 'email', message: 'This email is already in use' },
-      ]);
-    }
-    throw error;
-  }
 }
 
 /** Another admin's agent is a 404, so their ids reveal nothing. */
