@@ -50,3 +50,11 @@ export function updatePasswordHash(id: string, passwordHash: string) {
 export function updateThemePreference(id: string, themePreference: ThemePreference) {
   return prisma.user.update({ where: { id }, data: { themePreference }, select: publicUserSelect });
 }
+
+/** The user's own name, phone and (for admins) email. */
+export function updateOwnProfile(
+  id: string,
+  data: { fullName: string; phone: string | null; email?: string },
+) {
+  return prisma.user.update({ where: { id }, data, select: publicUserSelect });
+}
