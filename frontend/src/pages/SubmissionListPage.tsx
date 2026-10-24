@@ -130,6 +130,7 @@ export function SubmissionListPage() {
             <table className="table">
               <thead>
                 <tr>
+                  <th className="w-12 text-right">S.No.</th>
                   <th>Reference</th>
                   <th>Customer</th>
                   <th className="hidden md:table-cell">Location</th>
@@ -141,8 +142,12 @@ export function SubmissionListPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((submission) => (
+                {data.items.map((submission, index) => (
                   <tr key={submission.id} className="hover:bg-base-200">
+                    {/* Counts on across pages: page 2 starts at pageSize + 1. */}
+                    <td className="text-base-content/70 text-right tabular-nums">
+                      {(data.page - 1) * data.pageSize + index + 1}
+                    </td>
                     <td>
                       <Link
                         to={`/submissions/${submission.id}`}
