@@ -1,7 +1,8 @@
-import { CheckCircle2, KeyRound } from 'lucide-react';
+import { CheckCircle2, KeyRound, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { ROLE_LABELS } from 'shared';
 import { ChangePasswordDialog } from '@/features/profile/ChangePasswordDialog';
+import { EditProfileDialog } from '@/features/profile/EditProfileDialog';
 import { useAuth } from '@/hooks/useAuth';
 
 function formatDateTime(iso: string | null) {
@@ -9,8 +10,9 @@ function formatDateTime(iso: string | null) {
 }
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   if (!user) return null;
 
@@ -48,6 +50,17 @@ export function ProfilePage() {
           <div className="card-actions mt-4 justify-end">
             <button
               type="button"
+              className="btn"
+              onClick={() => {
+                setSuccess(null);
+                setEditOpen(true);
+              }}
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              Edit profile
+            </button>
+            <button
+              type="button"
               className="btn btn-primary"
               onClick={() => {
                 setSuccess(null);
@@ -60,6 +73,19 @@ export function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {editOpen && (
+        <EditProfileDialog
+          user={user}
+          onClose={() => setEditOpen(false)}
+          onSaved={(updated) => {
+            // Updates the name in the top bar and menu straight away.
+            setUser(updated);
+            setEditOpen(false);
+            setSuccess('Your profile was updated.');
+          }}
+        />
+      )}
 
       <ChangePasswordDialog
         open={passwordDialogOpen}
