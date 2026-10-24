@@ -33,6 +33,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // Plain scripts that Vite copies as they are (e.g. the theme loader).
+    files: ['frontend/public/**/*.js'],
+    languageOptions: { globals: globals.browser, sourceType: 'script' },
+  },
+  {
     files: ['frontend/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
     plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
