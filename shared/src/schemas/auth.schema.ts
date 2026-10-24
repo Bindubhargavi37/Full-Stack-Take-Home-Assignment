@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ROLES } from '../constants/roles';
 import { THEMES } from '../constants/themes';
-import { emailSchema } from './common.schema';
+import { emailSchema, optionalPhoneSchema, personNameSchema } from './common.schema';
 
 // bcrypt only reads the first 72 bytes of a password, so longer ones are rejected.
 const PASSWORD_MAX = 72;
@@ -53,9 +53,25 @@ export const updatePreferencesSchema = z
   .object({ themePreference: z.enum(THEMES, { message: 'Choose a valid theme' }) })
   .strict();
 
+/**
+ * PATCH /users/me: a user edits their own profile. Name and phone for everyone. Changing the
+ * email (the sign-in name) is for admins only and needs the current password; the server checks
+ * both rules (agents ask their admin, who changes it from agent management).
+ */
+export const updateProfileSchema = z
+  .object({
+    fullName: personNameSchema('Full name'),
+    phone: optionalPhoneSchema,
+    email: emailSchema.optional(),
+    currentPassword: z.string().max(PASSWORD_MAX).optional(),
+  })
+  .strict();
+
 export type LoginInput = z.input<typeof loginSchema>;
 export type ChangePasswordInput = z.input<typeof changePasswordSchema>;
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
+export type UpdateProfileInput = z.input<typeof updateProfileSchema>;
+export type UpdateProfileValues = z.output<typeof updateProfileSchema>;
 
 /** The user object the API returns. Never includes the password hash. */
 export const authUserSchema = z.object({
