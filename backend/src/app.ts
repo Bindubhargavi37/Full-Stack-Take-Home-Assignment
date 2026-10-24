@@ -1,9 +1,11 @@
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
-import { env } from './config/env';
+import { env, isProduction } from './config/env';
 import { logger } from './config/logger';
 import { errorHandler } from './middlewares/errorHandler';
 import { notFound } from './middlewares/notFound';
@@ -35,6 +37,24 @@ export function createApp() {
   );
 
   app.use('/api/v1', apiLimiter, requireCsrfHeader, apiRouter);
+
+  // In production one server hosts both the API and the built React app, so the browser sees a
+  // single origin and the httpOnly cookies work as in development. (In development Vite serves
+  // the frontend instead.) The path is the same from src/ and from the bundled dist/ folder.
+  if (isProduction) {
+    const frontendDist = fileURLToPath(new URL('../../frontend/dist', import.meta.url));
+    // Vite puts a content hash in asset names, so they can be cached for a long time.
+    app.use(
+      '/assets',
+      express.static(join(frontendDist, 'assets'), { immutable: true, maxAge: '1y' }),
+    );
+    app.use(express.static(frontendDist, { index: false }));
+    // Any other page address (e.g. /dashboard after a reload) gets the app, which routes itself.
+    // API paths are left alone so unknown ones still return the JSON 404 below.
+    app.get(/^\/(?!api\/).*/, (_req, res) => {
+      res.sendFile(join(frontendDist, 'index.html'));
+    });
+  }
 
   app.use(notFound);
   app.use(errorHandler);

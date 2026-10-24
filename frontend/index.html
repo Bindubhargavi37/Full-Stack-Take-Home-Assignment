@@ -4,23 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Forms Dashboard</title>
-    <script>
-      // Apply the saved daisyUI theme before React loads, so there is no flash of the wrong theme.
-      (function () {
-        var saved = null;
-        try {
-          saved = localStorage.getItem('theme');
-        } catch (e) {}
-        var theme = !saved
-          ? 'corporate'
-          : saved === 'SYSTEM'
-            ? window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light'
-            : saved.toLowerCase();
-        document.documentElement.setAttribute('data-theme', theme);
-      })();
-    </script>
+    <!-- Applies the saved theme before React loads (no flash of the wrong theme). -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

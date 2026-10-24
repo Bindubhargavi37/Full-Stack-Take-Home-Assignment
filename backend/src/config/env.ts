@@ -7,7 +7,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
-  CLIENT_URL: z.url().default('http://localhost:5173'),
+  // Render sets RENDER_EXTERNAL_URL to the service's own public URL, so a deployment needs no
+  // extra setting; locally the Vite dev server is the default.
+  CLIENT_URL: z.url().default(process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:5173'),
   DATABASE_URL: z.string().startsWith('postgresql://', 'DATABASE_URL must be a PostgreSQL URL'),
 
   // Authentication
