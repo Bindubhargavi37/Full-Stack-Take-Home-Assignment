@@ -53,6 +53,7 @@ export function EditAgentDialog({ agent, open, onClose, onSaved }: Props) {
         )}
         <TextField
           label="Full name"
+          placeholder="e.g. Priya Nair"
           autoComplete="off"
           required
           error={errors.fullName?.message}
@@ -60,6 +61,7 @@ export function EditAgentDialog({ agent, open, onClose, onSaved }: Props) {
         />
         <TextField
           label="Email"
+          placeholder="agent@company.com"
           type="email"
           autoComplete="off"
           required

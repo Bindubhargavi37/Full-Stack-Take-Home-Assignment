@@ -79,6 +79,7 @@ export function RecordPaymentDialog({ submission, open, onClose, onRecorded }: P
         </p>
         <TextField
           label="Amount received (₹)"
+          placeholder={`Up to ${formatRupees(due)}`}
           type="number"
           inputMode="decimal"
           min={0}

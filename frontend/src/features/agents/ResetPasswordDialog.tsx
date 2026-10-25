@@ -54,6 +54,7 @@ export function ResetPasswordDialog({ agent, open, onClose, onReset }: Props) {
         )}
         <PasswordField
           label="New password"
+          placeholder="At least 8 characters"
           autoComplete="new-password"
           required
           error={errors.newPassword?.message}
@@ -62,6 +63,7 @@ export function ResetPasswordDialog({ agent, open, onClose, onReset }: Props) {
         <PasswordChecklist value={newPassword} />
         <PasswordField
           label="Confirm new password"
+          placeholder="Type the new password again"
           autoComplete="new-password"
           required
           error={errors.confirmPassword?.message}

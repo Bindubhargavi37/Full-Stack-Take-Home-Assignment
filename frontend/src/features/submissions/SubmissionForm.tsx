@@ -113,6 +113,7 @@ export function SubmissionForm({ defaultValues, submitLabel, cancelTo, onSubmit 
             <div className="grid gap-x-4 sm:grid-cols-2">
               <TextField
                 label="Customer name"
+                placeholder="e.g. Kavya Rao"
                 autoComplete="off"
                 required
                 error={errors.customerName?.message}
@@ -152,6 +153,7 @@ export function SubmissionForm({ defaultValues, submitLabel, cancelTo, onSubmit 
             <div className="grid gap-x-4 sm:grid-cols-3">
               <TextField
                 label="Total amount (₹)"
+                placeholder="e.g. 1500.00"
                 type="number"
                 inputMode="decimal"
                 min={0}
@@ -162,6 +164,7 @@ export function SubmissionForm({ defaultValues, submitLabel, cancelTo, onSubmit 
               />
               <TextField
                 label="Amount paid (₹)"
+                placeholder="0.00"
                 type="number"
                 inputMode="decimal"
                 min={0}
@@ -225,6 +228,7 @@ export function SubmissionForm({ defaultValues, submitLabel, cancelTo, onSubmit 
             </div>
             <TextAreaField
               label="Remarks"
+              placeholder="Anything the admin should know about this sample (optional)"
               maxLength={500}
               hint="Optional, up to 500 characters"
               error={errors.remarks?.message}
