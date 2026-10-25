@@ -87,8 +87,8 @@ Run every command from the **repository root** unless stated otherwise.
 **1. Clone and install**
 
 ```bash
-git clone https://github.com/Bindubhargavi37/Full-Stack-Take-Home-Assignment.git
-cd Full-Stack-Take-Home-Assignment
+git clone https://github.com/Bindubhargavi37/Role_Based_Access_Control.git
+cd Role_Based_Access_Control
 npm install
 ```
 
