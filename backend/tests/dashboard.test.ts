@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import type { DashboardSummary } from 'shared';
+import { istDate, istDayEnd, istDayStart, type DashboardSummary } from 'shared';
 import type TestAgent from 'supertest/lib/agent';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { prisma } from '../src/config/db';
@@ -226,19 +226,19 @@ describe('filters', () => {
     expect(data.cards.paymentPending).toBe(0);
   });
 
-  it('filters by whole UTC days and charts a short range per day', async () => {
+  it('filters by whole IST days and charts a short range per day', async () => {
     const [first] = await prisma.submission.findMany({
       where: { agentId },
       orderBy: { createdAt: 'asc' },
       take: 1,
     });
-    const day = first!.createdAt.toISOString().slice(0, 10);
+    const day = istDate(first!.createdAt);
     const data = await summary(agent, { fromDate: day, toDate: day });
     const want = await expected({
       agentId,
       createdAt: {
-        gte: new Date(`${day}T00:00:00.000Z`),
-        lt: new Date(Date.parse(`${day}T00:00:00.000Z`) + 86_400_000),
+        gte: istDayStart(day),
+        lt: istDayEnd(day),
       },
     });
 

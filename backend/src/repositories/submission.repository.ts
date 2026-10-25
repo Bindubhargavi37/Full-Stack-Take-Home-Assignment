@@ -1,5 +1,5 @@
 import type { Prisma, SubmissionStatus } from '@prisma/client';
-import type { ListSubmissionsQuery } from 'shared';
+import { istDayEnd, istDayStart, type ListSubmissionsQuery } from 'shared';
 import { prisma } from '../config/db';
 
 /** Whose submissions a request may touch: an agent's own, or those of one admin's agents. */
@@ -11,8 +11,6 @@ const submissionInclude = {
 
 export type SubmissionRecord = Prisma.SubmissionGetPayload<{ include: typeof submissionInclude }>;
 
-const DAY = 86_400_000;
-
 function scopeWhere(scope: SubmissionScope): Prisma.SubmissionWhereInput {
   return 'agentId' in scope ? { agentId: scope.agentId } : { agent: { adminId: scope.adminId } };
 }
@@ -22,12 +20,12 @@ function listWhere(scope: SubmissionScope, query: ListSubmissionsQuery) {
 
   if (query.agentId) conditions.push({ agentId: query.agentId });
   if (query.status?.length) conditions.push({ status: { in: query.status } });
-  // Whole days in UTC: toDate includes everything up to the end of that day.
+  // Whole days in IST: toDate includes everything up to the end of that day in India.
   if (query.fromDate || query.toDate) {
     conditions.push({
       createdAt: {
-        gte: query.fromDate ? new Date(`${query.fromDate}T00:00:00.000Z`) : undefined,
-        lt: query.toDate ? new Date(Date.parse(`${query.toDate}T00:00:00.000Z`) + DAY) : undefined,
+        gte: query.fromDate ? istDayStart(query.fromDate) : undefined,
+        lt: query.toDate ? istDayEnd(query.toDate) : undefined,
       },
     });
   }
