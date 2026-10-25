@@ -11,6 +11,12 @@ const envSchema = z.object({
   // extra setting; locally the Vite dev server is the default.
   CLIENT_URL: z.url().default(process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:5173'),
   DATABASE_URL: z.string().startsWith('postgresql://', 'DATABASE_URL must be a PostgreSQL URL'),
+  // Public URL the keep-alive job pings (src/jobs/keepAlive.ts). Render sets RENDER_EXTERNAL_URL,
+  // so it is on automatically there and off everywhere else.
+  KEEP_ALIVE_URL: z.preprocess(
+    (value) => value || process.env.RENDER_EXTERNAL_URL,
+    z.url().optional(),
+  ),
 
   // Authentication
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
