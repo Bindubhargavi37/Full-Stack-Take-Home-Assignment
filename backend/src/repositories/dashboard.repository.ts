@@ -1,5 +1,12 @@
 import { Prisma } from '@prisma/client';
-import { AMOUNT_RANGES, TOP_LOCATIONS_LIMIT, type DashboardQuery } from 'shared';
+import {
+  AMOUNT_RANGES,
+  istDayEnd,
+  istDayStart,
+  TIME_ZONE,
+  TOP_LOCATIONS_LIMIT,
+  type DashboardQuery,
+} from 'shared';
 import { prisma } from '../config/db';
 
 // Dashboard metrics, computed in PostgreSQL with GROUP BY: only the totals leave the database.
@@ -9,7 +16,6 @@ import { prisma } from '../config/db';
 /** Whose submissions: the given agents' (one or more), or every agent of one admin. */
 export type DashboardScope = { agentIds: string[] } | { adminId: string };
 
-const DAY = 86_400_000;
 const FROM = Prisma.sql`FROM submissions s JOIN users u ON u.id = s.agent_id`;
 
 function whereClause(scope: DashboardScope, query: DashboardQuery, extra: Prisma.Sql[] = []) {
@@ -21,13 +27,12 @@ function whereClause(scope: DashboardScope, query: DashboardQuery, extra: Prisma
   if (query.status?.length) {
     conditions.push(Prisma.sql`s.status::text IN (${Prisma.join(query.status)})`);
   }
-  // Whole days in UTC, the same rule as the submissions list.
+  // Whole days in IST, the same rule as the submissions list.
   if (query.fromDate) {
-    conditions.push(Prisma.sql`s.created_at >= ${new Date(`${query.fromDate}T00:00:00.000Z`)}`);
+    conditions.push(Prisma.sql`s.created_at >= ${istDayStart(query.fromDate)}`);
   }
   if (query.toDate) {
-    const end = new Date(Date.parse(`${query.toDate}T00:00:00.000Z`) + DAY);
-    conditions.push(Prisma.sql`s.created_at < ${end}`);
+    conditions.push(Prisma.sql`s.created_at < ${istDayEnd(query.toDate)}`);
   }
   return Prisma.sql`WHERE ${Prisma.join([...conditions, ...extra], ' AND ')}`;
 }
@@ -50,17 +55,17 @@ export async function moneyTotals(scope: DashboardScope, query: DashboardQuery) 
   return row ?? { billed: 0, collected: 0, due: 0 };
 }
 
-/** Submissions per UTC day (YYYY-MM-DD). The service fills empty days and may group by month. */
+/** Submissions per IST day (YYYY-MM-DD). The service fills empty days and may group by month. */
 export function countByDay(scope: DashboardScope, query: DashboardQuery) {
   return prisma.$queryRaw<{ day: string; count: number }[]>`
-    SELECT to_char(s.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day, count(*)::int AS count
+    SELECT to_char(s.created_at AT TIME ZONE ${TIME_ZONE}, 'YYYY-MM-DD') AS day, count(*)::int AS count
     ${FROM} ${whereClause(scope, query)}
     GROUP BY 1 ORDER BY 1`;
 }
 
 export function billingByMonth(scope: DashboardScope, query: DashboardQuery) {
   return prisma.$queryRaw<{ month: string; billed: number; collected: number; pending: number }[]>`
-    SELECT to_char(s.created_at AT TIME ZONE 'UTC', 'YYYY-MM') AS month,
+    SELECT to_char(s.created_at AT TIME ZONE ${TIME_ZONE}, 'YYYY-MM') AS month,
            coalesce(sum(s.total_amount), 0)::float8 AS billed,
            coalesce(sum(s.amount_paid), 0)::float8 AS collected,
            coalesce(sum(s.amount_due), 0)::float8 AS pending
