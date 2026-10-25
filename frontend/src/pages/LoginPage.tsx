@@ -77,6 +77,7 @@ export function LoginPage() {
               />
               <PasswordField
                 label="Password"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 required
                 error={errors.password?.message}

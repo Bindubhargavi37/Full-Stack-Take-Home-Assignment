@@ -64,6 +64,7 @@ export function CreateAgentDialog({ open, onClose, onCreated }: Props) {
         )}
         <TextField
           label="Full name"
+          placeholder="e.g. Priya Nair"
           autoComplete="off"
           required
           error={errors.fullName?.message}
@@ -71,6 +72,7 @@ export function CreateAgentDialog({ open, onClose, onCreated }: Props) {
         />
         <TextField
           label="Email"
+          placeholder="agent@company.com"
           type="email"
           autoComplete="off"
           required
@@ -87,6 +89,7 @@ export function CreateAgentDialog({ open, onClose, onCreated }: Props) {
         />
         <PasswordField
           label="First password"
+          placeholder="At least 8 characters"
           autoComplete="new-password"
           required
           error={errors.password?.message}
