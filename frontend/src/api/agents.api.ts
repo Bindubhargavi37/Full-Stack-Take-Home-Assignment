@@ -6,16 +6,10 @@ import type {
   ResetAgentPasswordInput,
   UpdateAgentValues,
 } from 'shared';
-import { api } from '@/lib/apiClient';
+import { api, withQuery, type QueryParams } from '@/lib/apiClient';
 
-/** Filters as they appear in the page URL; empty values are left out of the request. */
-export type AgentListParams = Record<string, string | undefined>;
-
-export function listAgents(params: AgentListParams): Promise<Paginated<Agent>> {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) if (value) query.set(key, value);
-  const search = query.toString();
-  return api(`/agents${search ? `?${search}` : ''}`);
+export function listAgents(params: QueryParams): Promise<Paginated<Agent>> {
+  return api(withQuery('/agents', params));
 }
 
 export async function listAgentOptions(): Promise<AgentOption[]> {

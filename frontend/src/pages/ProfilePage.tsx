@@ -4,10 +4,7 @@ import { ROLE_LABELS } from 'shared';
 import { ChangePasswordDialog } from '@/features/profile/ChangePasswordDialog';
 import { EditProfileDialog } from '@/features/profile/EditProfileDialog';
 import { useAuth } from '@/hooks/useAuth';
-
-function formatDateTime(iso: string | null) {
-  return iso ? new Date(iso).toLocaleString() : 'Never';
-}
+import { formatDateTime } from '@/lib/format';
 
 export function ProfilePage() {
   const { user, setUser } = useAuth();
@@ -38,7 +35,7 @@ export function ProfilePage() {
               ['Email', user.email],
               ['Role', ROLE_LABELS[user.role]],
               ['Phone', user.phone ?? '—'],
-              ['Last sign-in', formatDateTime(user.lastLoginAt)],
+              ['Last sign-in', user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'],
             ].map(([term, value]) => (
               <div key={term}>
                 <dt className="text-base-content/60 text-sm">{term}</dt>
