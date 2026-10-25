@@ -1,6 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
-import { useSearchParams } from 'react-router';
 import { STATUS_LABELS, type SubmissionStatus } from 'shared';
 import { listAgentOptions } from '@/api/agents.api';
 import { getDashboardSummary } from '@/api/dashboard.api';
@@ -20,6 +19,7 @@ import { dateRangeFor, isDatePreset } from '@/features/dashboard/datePresets';
 import { StatCard } from '@/features/dashboard/StatCard';
 import { useChartTheme } from '@/features/dashboard/useChartTheme';
 import { useAuth } from '@/hooks/useAuth';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { formatRupeesWhole, formatTime } from '@/lib/format';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -43,7 +43,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const theme = useChartTheme();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, updateParams } = useUrlParams();
 
   const rangeParam = searchParams.get(URL_KEYS.range);
   const filters: DashboardFilterValues = {
@@ -74,15 +74,15 @@ export function DashboardPage() {
   });
 
   function updateFilters(changes: Partial<DashboardFilterValues>) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      for (const [name, value] of Object.entries(changes)) {
-        const key = URL_KEYS[name as keyof DashboardFilterValues];
-        if (value && !(name === 'range' && value === 'all')) next.set(key, value);
-        else next.delete(key);
-      }
-      return next;
-    });
+    updateParams(
+      Object.fromEntries(
+        Object.entries(changes).map(([name, value]) => [
+          URL_KEYS[name as keyof DashboardFilterValues],
+          // "All time" is the default, so it isn't written to the URL.
+          name === 'range' && value === 'all' ? '' : value,
+        ]),
+      ),
+    );
   }
 
   /**
@@ -219,8 +219,8 @@ export function DashboardPage() {
             <BreakdownChart summary={data} />
           </section>
           <p className="text-base-content/60 text-xs">
-            Money totals leave out rejected submissions. Dates are whole days in UTC. The page
-            refreshes every {REFRESH_MS / 1000} seconds while it is open.
+            Money totals leave out rejected submissions. Dates are whole days in Indian Standard
+            Time. The page refreshes every {REFRESH_MS / 1000} seconds while it is open.
           </p>
         </div>
       )}

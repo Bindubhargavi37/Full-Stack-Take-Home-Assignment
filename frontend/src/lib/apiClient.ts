@@ -65,6 +65,17 @@ async function toApiError(res: Response): Promise<ApiError> {
   );
 }
 
+/** Filters as they appear in a page URL; empty values are left out of the request. */
+export type QueryParams = Record<string, string | undefined>;
+
+/** "/submissions" + { status: 'COMPLETED', search: '' } → "/submissions?status=COMPLETED". */
+export function withQuery(path: string, params: QueryParams): string {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) if (value) query.set(key, value);
+  const search = query.toString();
+  return search ? `${path}?${search}` : path;
+}
+
 /** Calls the API and returns `data` from the response, or throws an ApiError. */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   let res: Response;

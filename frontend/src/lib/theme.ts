@@ -19,10 +19,10 @@ export function storeTheme(theme: Theme): void {
   }
 }
 
-export const systemPrefersDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+const systemPrefersDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 /** Turns our theme name into the daisyUI theme to apply. SYSTEM follows the OS setting. */
-export function resolveTheme(theme: Theme): string {
+function resolveTheme(theme: Theme): string {
   if (theme === 'SYSTEM') return systemPrefersDark() ? 'dark' : 'light';
   return theme.toLowerCase();
 }
