@@ -82,6 +82,7 @@ export function EditProfileDialog({ user, onClose, onSaved }: Props) {
         )}
         <TextField
           label="Full name"
+          placeholder="Your full name"
           autoComplete="name"
           required
           error={errors.fullName?.message}
@@ -99,6 +100,7 @@ export function EditProfileDialog({ user, onClose, onSaved }: Props) {
         {isAdmin ? (
           <TextField
             label="Email"
+            placeholder="name@company.com"
             type="email"
             autoComplete="email"
             required
@@ -119,6 +121,7 @@ export function EditProfileDialog({ user, onClose, onSaved }: Props) {
         {emailChanged && (
           <PasswordField
             label="Current password"
+            placeholder="Your current password"
             autoComplete="current-password"
             required
             hint="Needed to change your sign-in email."

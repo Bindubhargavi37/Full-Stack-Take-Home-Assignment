@@ -66,6 +66,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged }: Props) {
 
         <PasswordField
           label="Current password"
+          placeholder="Your current password"
           autoComplete="current-password"
           required
           error={errors.currentPassword?.message}
@@ -73,6 +74,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged }: Props) {
         />
         <PasswordField
           label="New password"
+          placeholder="At least 8 characters"
           autoComplete="new-password"
           required
           error={errors.newPassword?.message}
@@ -81,6 +83,7 @@ export function ChangePasswordDialog({ open, onClose, onChanged }: Props) {
         <PasswordChecklist value={newPassword} />
         <PasswordField
           label="Confirm new password"
+          placeholder="Type the new password again"
           autoComplete="new-password"
           required
           error={errors.confirmPassword?.message}
