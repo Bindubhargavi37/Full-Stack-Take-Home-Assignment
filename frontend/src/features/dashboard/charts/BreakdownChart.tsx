@@ -27,7 +27,7 @@ export function BreakdownChart({ summary }: { summary: DashboardSummary }) {
     return (
       <ChartCard
         title="Order sizes"
-        description="Submissions by total amount"
+        description="Submissions by total amount (₹)"
         table={{
           columns: ['Total amount', 'Submissions'],
           rows: rows.map((row) => [row.label, row.count]),
@@ -37,7 +37,15 @@ export function BreakdownChart({ summary }: { summary: DashboardSummary }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
             <CartesianGrid vertical={false} {...gridProps(theme)} />
-            <XAxis dataKey="label" interval={0} {...axisProps(theme)} />
+            <XAxis
+              dataKey="label"
+              interval={0}
+              // Short labels so all six fit side by side on a phone: "₹" moves to the subtitle and
+              // a range keeps one "k" ("₹5k–10k" → "5–10k"). The table keeps the full labels.
+              tickFormatter={(label: string) => label.replace('₹', '').replace(/k–/, '–')}
+              {...axisProps(theme)}
+              tick={{ ...axisProps(theme).tick, fontSize: 11 }}
+            />
             <YAxis allowDecimals={false} tickFormatter={formatCountCompact} {...axisProps(theme)} />
             <Tooltip content={<ChartTooltip />} cursor={cursorProps(theme)} />
             <Bar
