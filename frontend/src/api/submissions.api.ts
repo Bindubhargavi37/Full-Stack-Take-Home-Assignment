@@ -6,16 +6,10 @@ import type {
   Submission,
   SubmissionFormValues,
 } from 'shared';
-import { api } from '@/lib/apiClient';
+import { api, withQuery, type QueryParams } from '@/lib/apiClient';
 
-/** Filters as they appear in the page URL; empty values are left out of the request. */
-export type SubmissionListParams = Record<string, string | undefined>;
-
-export function listSubmissions(params: SubmissionListParams): Promise<Paginated<Submission>> {
-  const query = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) if (value) query.set(key, value);
-  const search = query.toString();
-  return api(`/submissions${search ? `?${search}` : ''}`);
+export function listSubmissions(params: QueryParams): Promise<Paginated<Submission>> {
+  return api(withQuery('/submissions', params));
 }
 
 export async function getSubmission(id: string): Promise<Submission> {

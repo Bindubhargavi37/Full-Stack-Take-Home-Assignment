@@ -1,8 +1,6 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ClipboardList,
   KeyRound,
   Pencil,
@@ -12,13 +10,15 @@ import {
   Users,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import type { Agent } from 'shared';
 import { listAgents } from '@/api/agents.api';
 import { AgentStatusDialog } from '@/features/agents/AgentStatusDialog';
 import { CreateAgentDialog } from '@/features/agents/CreateAgentDialog';
 import { EditAgentDialog } from '@/features/agents/EditAgentDialog';
 import { ResetPasswordDialog } from '@/features/agents/ResetPasswordDialog';
+import { Pagination } from '@/components/ui/Pagination';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { formatDateTime } from '@/lib/format';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -29,7 +29,7 @@ type OpenDialog = { kind: 'edit' | 'reset' | 'status'; agent: Agent } | null;
 /** Admin: the agents they manage, with create, edit, reset password and deactivate. */
 export function AgentListPage() {
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, updateParams } = useUrlParams();
   const search = searchParams.get('search') ?? '';
   const status = searchParams.get('status') ?? '';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
@@ -44,17 +44,6 @@ export function AgentListPage() {
     queryFn: () => listAgents(params),
     placeholderData: keepPreviousData,
   });
-
-  function updateParams(changes: Record<string, string>) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      for (const [key, value] of Object.entries(changes)) {
-        if (value) next.set(key, value);
-        else next.delete(key);
-      }
-      return next;
-    });
-  }
 
   /** After any change: close the dialog, say what happened, and reload agent data. */
   async function done(message: string) {
@@ -237,37 +226,13 @@ export function AgentListPage() {
             </table>
           </div>
 
-          <nav
-            className="flex flex-wrap items-center justify-between gap-2 text-sm"
-            aria-label="Pagination"
-          >
-            <span className="text-base-content/70">
-              {data.total} agent{data.total === 1 ? '' : 's'}
-            </span>
-            <div className="join">
-              <button
-                type="button"
-                className="btn btn-sm join-item"
-                disabled={page <= 1}
-                onClick={() => updateParams({ page: String(page - 1) })}
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <span className="btn btn-sm join-item pointer-events-none">
-                Page {data.page} of {Math.max(1, data.totalPages)}
-              </span>
-              <button
-                type="button"
-                className="btn btn-sm join-item"
-                disabled={page >= data.totalPages}
-                onClick={() => updateParams({ page: String(page + 1) })}
-                aria-label="Next page"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-          </nav>
+          <Pagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            noun="agent"
+            onPageChange={(next) => updateParams({ page: String(next) })}
+          />
         </>
       )}
 

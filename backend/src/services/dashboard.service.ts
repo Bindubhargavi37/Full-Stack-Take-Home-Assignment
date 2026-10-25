@@ -1,5 +1,6 @@
 import {
   AMOUNT_RANGES,
+  istDate,
   SAMPLE_CONDITIONS,
   SUBMISSION_STATUSES,
   TEST_RESULTS,
@@ -21,6 +22,7 @@ const DAY = 86_400_000;
 const MAX_DAILY_POINTS = 92;
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
+// Plain calendar arithmetic on YYYY-MM-DD strings (done in UTC so no time zone can shift a day).
 const toDay = (time: number) => new Date(time).toISOString().slice(0, 10);
 const dayTime = (day: string) => Date.parse(`${day}T00:00:00.000Z`);
 
@@ -104,7 +106,7 @@ export async function getSummary(
   // --- The period covered by the time charts -----------------------------------------------
   // From the "from" filter (or the first submission) to the "to" filter (or today), never
   // past today, so the line doesn't run on into empty future days.
-  const today = toDay(Date.now());
+  const today = istDate();
   const firstDay = query.fromDate ?? dayRows[0]?.day;
   const lastDay = query.toDate && query.toDate < today ? query.toDate : today;
   const hasRange = firstDay !== undefined && firstDay <= lastDay;

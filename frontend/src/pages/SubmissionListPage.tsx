@@ -1,13 +1,15 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, FilePlus2, Inbox } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { FilePlus2, Inbox } from 'lucide-react';
+import { Link } from 'react-router';
 import { formatReference, formatRupees } from 'shared';
 import { listAgentOptions } from '@/api/agents.api';
 import { listSubmissions } from '@/api/submissions.api';
 import { SORT_OPTIONS, type FilterValues } from '@/features/submissions/listFilters';
 import { SubmissionFilters } from '@/features/submissions/SubmissionFilters';
 import { StatusBadge } from '@/features/submissions/StatusBadge';
+import { Pagination } from '@/components/ui/Pagination';
 import { useAuth } from '@/hooks/useAuth';
+import { useUrlParams } from '@/hooks/useUrlParams';
 import { formatDate } from '@/lib/format';
 import { queryKeys } from '@/lib/queryKeys';
 
@@ -17,7 +19,7 @@ const PAGE_SIZE = '10';
 export function SubmissionListPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setSearchParams, updateParams } = useUrlParams();
 
   const filters: FilterValues = {
     search: searchParams.get('search') ?? '',
@@ -53,18 +55,6 @@ export function SubmissionListPage() {
     // Keep showing the current page while the next one loads.
     placeholderData: keepPreviousData,
   });
-
-  function updateParams(changes: Record<string, string>) {
-    // Start from the latest URL (not this render's copy), so quick changes don't undo each other.
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      for (const [key, value] of Object.entries(changes)) {
-        if (value) next.set(key, value);
-        else next.delete(key);
-      }
-      return next;
-    });
-  }
 
   const hasFilters = Boolean(
     filters.search || filters.status || filters.agentId || filters.fromDate || filters.toDate,
@@ -181,37 +171,13 @@ export function SubmissionListPage() {
             </table>
           </div>
 
-          <nav
-            className="flex flex-wrap items-center justify-between gap-2 text-sm"
-            aria-label="Pagination"
-          >
-            <span className="text-base-content/70">
-              {data.total} submission{data.total === 1 ? '' : 's'}
-            </span>
-            <div className="join">
-              <button
-                type="button"
-                className="btn btn-sm join-item"
-                disabled={page <= 1}
-                onClick={() => updateParams({ page: String(page - 1) })}
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <span className="btn btn-sm join-item pointer-events-none">
-                Page {data.page} of {Math.max(1, data.totalPages)}
-              </span>
-              <button
-                type="button"
-                className="btn btn-sm join-item"
-                disabled={page >= data.totalPages}
-                onClick={() => updateParams({ page: String(page + 1) })}
-                aria-label="Next page"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-          </nav>
+          <Pagination
+            page={data.page}
+            totalPages={data.totalPages}
+            total={data.total}
+            noun="submission"
+            onPageChange={(next) => updateParams({ page: String(next) })}
+          />
         </>
       )}
     </div>
