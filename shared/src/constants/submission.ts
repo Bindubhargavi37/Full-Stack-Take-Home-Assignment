@@ -58,12 +58,6 @@ export const STATUS_ACTIONS = ['complete', 'send-back', 'reject'] as const;
 
 export type StatusAction = (typeof STATUS_ACTIONS)[number];
 
-export const STATUS_ACTION_LABELS: Record<StatusAction, string> = {
-  complete: 'Mark as completed',
-  'send-back': 'Send back',
-  reject: 'Reject',
-};
-
 // The status lifecycle (README: "Status transitions"). The server enforces it; the UI uses the
 // same table to show only the actions that are allowed. The client never sends a status.
 
