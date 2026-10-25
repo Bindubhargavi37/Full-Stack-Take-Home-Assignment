@@ -7,10 +7,9 @@ import type {
   UpdateAgentValues,
 } from 'shared';
 import * as agentService from '../services/agent.service';
+import { idParam } from '../utils/params';
 
 // Every route here is admin-only, so req.user is the admin who owns the agents.
-type IdParams = { id: string };
-const idOf = (locals: Record<string, unknown>) => (locals.params as IdParams).id;
 
 export const list: RequestHandler = async (req, res) => {
   const page = await agentService.listAgents(req.user!.id, res.locals.query as ListAgentsQuery);
@@ -23,7 +22,7 @@ export const options: RequestHandler = async (req, res) => {
 };
 
 export const getOne: RequestHandler = async (req, res) => {
-  const agent = await agentService.getAgent(req.user!.id, idOf(res.locals));
+  const agent = await agentService.getAgent(req.user!.id, idParam(res));
   res.json({ success: true, data: { agent } });
 };
 
@@ -35,7 +34,7 @@ export const create: RequestHandler = async (req, res) => {
 export const update: RequestHandler = async (req, res) => {
   const agent = await agentService.updateAgent(
     req.user!.id,
-    idOf(res.locals),
+    idParam(res),
     req.body as UpdateAgentValues,
   );
   res.json({ success: true, data: { agent } });
@@ -44,7 +43,7 @@ export const update: RequestHandler = async (req, res) => {
 export const setStatus: RequestHandler = async (req, res) => {
   const agent = await agentService.setAgentActive(
     req.user!.id,
-    idOf(res.locals),
+    idParam(res),
     (req.body as AgentStatusInput).isActive,
   );
   res.json({ success: true, data: { agent } });
@@ -53,7 +52,7 @@ export const setStatus: RequestHandler = async (req, res) => {
 export const resetPassword: RequestHandler = async (req, res) => {
   await agentService.resetAgentPassword(
     req.user!.id,
-    idOf(res.locals),
+    idParam(res),
     (req.body as ResetAgentPasswordInput).newPassword,
   );
   res.json({

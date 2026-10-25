@@ -6,10 +6,7 @@ import type {
   SubmissionFormValues,
 } from 'shared';
 import * as submissionService from '../services/submission.service';
-
-// Parsed by the validate middleware before these run.
-type IdParams = { id: string };
-const idOf = (locals: Record<string, unknown>) => (locals.params as IdParams).id;
+import { idParam } from '../utils/params';
 
 export const list: RequestHandler = async (req, res) => {
   const page = await submissionService.listSubmissions(
@@ -28,19 +25,19 @@ export const create: RequestHandler = async (req, res) => {
 };
 
 export const getOne: RequestHandler = async (req, res) => {
-  const submission = await submissionService.getSubmission(req.user!, idOf(res.locals));
+  const submission = await submissionService.getSubmission(req.user!, idParam(res));
   res.json({ success: true, data: { submission } });
 };
 
 export const history: RequestHandler = async (req, res) => {
-  const entries = await submissionService.getStatusHistory(req.user!, idOf(res.locals));
+  const entries = await submissionService.getStatusHistory(req.user!, idParam(res));
   res.json({ success: true, data: { history: entries } });
 };
 
 export const resubmit: RequestHandler = async (req, res) => {
   const submission = await submissionService.resubmitSubmission(
     req.user!,
-    idOf(res.locals),
+    idParam(res),
     req.body as SubmissionFormValues,
   );
   res.json({ success: true, data: { submission } });
@@ -49,7 +46,7 @@ export const resubmit: RequestHandler = async (req, res) => {
 export const recordPayment: RequestHandler = async (req, res) => {
   const submission = await submissionService.recordPayment(
     req.user!,
-    idOf(res.locals),
+    idParam(res),
     req.body as RecordPaymentValues,
   );
   res.json({ success: true, data: { submission } });
@@ -58,7 +55,7 @@ export const recordPayment: RequestHandler = async (req, res) => {
 export const changeStatus: RequestHandler = async (req, res) => {
   const submission = await submissionService.changeStatus(
     req.user!,
-    idOf(res.locals),
+    idParam(res),
     req.body as ChangeStatusValues,
   );
   res.json({ success: true, data: { submission } });
