@@ -8,7 +8,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { DashboardSummary } from 'shared';
-import { formatCountCompact, formatDayShort, formatMonth } from '@/lib/format';
+import { formatCalendarDate, formatCountCompact, formatDayShort, formatMonth } from '@/lib/format';
 import { ChartCard } from '../ChartCard';
 import { ChartTooltip } from '../ChartTooltip';
 import { axisProps, gridProps } from '../chartStyles';
@@ -18,7 +18,9 @@ import { useChartTheme } from '../useChartTheme';
 export function OverTimeChart({ summary }: { summary: DashboardSummary }) {
   const theme = useChartTheme();
   const { granularity, points } = summary.overTime;
-  const formatPeriod = granularity === 'month' ? formatMonth : formatDayShort;
+  // Axis ticks are short (dd/mm); the tooltip and table show the full date (dd/mm/yyyy).
+  const formatTick = granularity === 'month' ? formatMonth : formatDayShort;
+  const formatPeriod = granularity === 'month' ? formatMonth : formatCalendarDate;
   const color = theme.series[0];
 
   return (
@@ -36,7 +38,7 @@ export function OverTimeChart({ summary }: { summary: DashboardSummary }) {
           <CartesianGrid vertical={false} {...gridProps(theme)} />
           <XAxis
             dataKey="period"
-            tickFormatter={formatPeriod}
+            tickFormatter={formatTick}
             minTickGap={24}
             {...axisProps(theme)}
           />
