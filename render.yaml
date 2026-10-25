@@ -3,7 +3,8 @@
 # Render asks. Every merge into the branch below is built and deployed automatically.
 services:
   - type: web
-    name: forms-dashboard
+    # The public address is https://<name>.onrender.com.
+    name: rolebasedform-dashboard
     runtime: node
     plan: free
     # Same AWS region as the Neon database (us-east-2), so every query stays fast.
