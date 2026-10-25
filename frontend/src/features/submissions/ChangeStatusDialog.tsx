@@ -22,6 +22,7 @@ const COPY: Record<
     title: string;
     explain: string;
     noteLabel: string;
+    notePlaceholder: string;
     button: string;
     buttonClass: string;
     done: string;
@@ -31,6 +32,7 @@ const COPY: Record<
     title: 'Mark as completed',
     explain: 'The submission is fully paid. Completing it closes it for good.',
     noteLabel: 'Note (optional)',
+    notePlaceholder: 'e.g. Payment verified with the bank statement',
     button: 'Mark as completed',
     buttonClass: 'btn-success',
     done: 'was marked as completed',
@@ -39,6 +41,7 @@ const COPY: Record<
     title: 'Send back for changes',
     explain: 'The agent will see your note, fix the form and resubmit it.',
     noteLabel: 'What needs to change?',
+    notePlaceholder: 'e.g. Customer phone number is missing, please add it',
     button: 'Send back',
     buttonClass: 'btn-warning',
     done: 'was sent back to the agent',
@@ -47,6 +50,7 @@ const COPY: Record<
     title: 'Reject submission',
     explain: 'Rejecting is final. The agent will see the reason.',
     noteLabel: 'Reason for rejecting',
+    notePlaceholder: 'e.g. Sample damaged beyond testing; customer informed',
     button: 'Reject',
     buttonClass: 'btn-error',
     done: 'was rejected',
@@ -112,6 +116,7 @@ export function ChangeStatusDialog({ submission, action, open, onClose, onChange
         </p>
         <TextAreaField
           label={copy.noteLabel}
+          placeholder={copy.notePlaceholder}
           required={noteRequired}
           maxLength={500}
           autoFocus
