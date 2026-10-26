@@ -13,7 +13,12 @@ const SERIES = [
   { key: 'pending', label: 'Pending' },
 ] as const;
 
-/** V3: money billed, collected and still pending per month (rejected left out). */
+type BillingRow = DashboardSummary['billingByMonth'][number];
+
+/**
+ * V3: money billed, collected and still pending per month. Billed includes rejected submissions;
+ * money paid on those is refunded (in the tooltip and table), not collected.
+ */
 export function BillingChart({ summary }: { summary: DashboardSummary }) {
   const theme = useChartTheme();
   const rows = summary.billingByMonth;
@@ -21,12 +26,13 @@ export function BillingChart({ summary }: { summary: DashboardSummary }) {
   return (
     <ChartCard
       title="Billed vs collected vs pending"
-      description="Per month, rejected submissions left out"
+      description="Per month; billed includes rejected samples"
       table={{
-        columns: ['Month', ...SERIES.map((series) => series.label)],
+        columns: ['Month', ...SERIES.map((series) => series.label), 'Refunded'],
         rows: rows.map((row) => [
           formatMonth(row.month),
           ...SERIES.map((series) => formatRupees(row[series.key])),
+          formatRupees(row.refunded),
         ]),
       }}
       empty={rows.every((row) => row.billed === 0)}
@@ -45,7 +51,15 @@ export function BillingChart({ summary }: { summary: DashboardSummary }) {
               <XAxis dataKey="month" tickFormatter={formatMonth} {...axisProps(theme)} />
               <YAxis tickFormatter={formatRupeesCompact} width={56} {...axisProps(theme)} />
               <Tooltip
-                content={<ChartTooltip formatLabel={formatMonth} formatValue={formatRupees} />}
+                content={
+                  <ChartTooltip
+                    formatLabel={formatMonth}
+                    formatValue={formatRupees}
+                    note={(row: BillingRow) =>
+                      row.refunded > 0 ? `${formatRupees(row.refunded)} refunded` : undefined
+                    }
+                  />
+                }
                 cursor={cursorProps(theme)}
               />
               {SERIES.map((series, index) => (

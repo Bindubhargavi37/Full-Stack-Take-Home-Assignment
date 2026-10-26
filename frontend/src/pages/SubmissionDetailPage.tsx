@@ -25,6 +25,7 @@ import { getStatusHistory, getSubmission } from '@/api/submissions.api';
 import { ChangeStatusDialog } from '@/features/submissions/ChangeStatusDialog';
 import { latestSendBackNote } from '@/features/submissions/latestSendBackNote';
 import { RecordPaymentDialog } from '@/features/submissions/RecordPaymentDialog';
+import { RefundBadge } from '@/features/submissions/RefundBadge';
 import { StatusBadge } from '@/features/submissions/StatusBadge';
 import { StatusTimeline } from '@/features/submissions/StatusTimeline';
 import { useAuth } from '@/hooks/useAuth';
@@ -141,6 +142,7 @@ export function SubmissionDetailPage() {
     : [];
   const sendBackNote = latestSendBackNote(historyQuery.data);
   const total = submission.totalAmount ?? 0;
+  const isRejected = submission.status === 'REJECTED';
 
   return (
     <div className="space-y-4">
@@ -219,20 +221,29 @@ export function SubmissionDetailPage() {
             <div className="card-body">
               <h2 className="card-title text-lg">Billing</h2>
               <dl className="grid grid-cols-3 gap-3">
-                {[
-                  ['Total', submission.totalAmount],
-                  ['Paid', submission.amountPaid],
-                  ['Due', submission.amountDue],
-                ].map(([term, value]) => (
-                  <div key={term as string}>
-                    <dt className="text-base-content/60 text-sm">{term}</dt>
+                {(
+                  [
+                    ['Total', 'Total', submission.totalAmount],
+                    ['Paid', 'Paid', submission.amountPaid],
+                    // Nothing is due on a rejected submission: what was paid goes back.
+                    isRejected
+                      ? [
+                          'Refund',
+                          <RefundBadge key="refund" className="badge-sm" />,
+                          submission.amountPaid,
+                        ]
+                      : ['Due', 'Due', submission.amountDue],
+                  ] as [string, ReactNode, number | null][]
+                ).map(([key, term, value]) => (
+                  <div key={key}>
+                    <dt className="text-base-content/60 flex h-5 items-center text-sm">{term}</dt>
                     <dd className="text-lg font-semibold">
-                      {value === null ? '—' : formatRupees(value as number)}
+                      {value === null ? '—' : formatRupees(value)}
                     </dd>
                   </div>
                 ))}
               </dl>
-              {total > 0 && (
+              {total > 0 && !isRejected && (
                 <progress
                   className="progress progress-success mt-2"
                   value={submission.amountPaid}

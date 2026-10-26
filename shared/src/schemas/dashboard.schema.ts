@@ -48,7 +48,9 @@ export const TOP_LOCATIONS_LIMIT = 8;
 
 // ---------------------------------------------------------------------------
 // Response shape. Every number is computed on the server for the caller's scope.
-// Money totals leave out rejected submissions.
+// Money: billed includes rejected submissions; collected and due leave them out, and money
+// paid on a rejected submission is refunded. totalBilled = totalCollected + pendingDue +
+// rejectedBilled.
 // ---------------------------------------------------------------------------
 
 export type DashboardCards = {
@@ -62,7 +64,13 @@ export type DashboardCards = {
   totalBilled: number;
   totalCollected: number;
   pendingDue: number;
-  /** Collected ÷ billed, 0–1; null when nothing was billed. */
+  /** Non-rejected submissions that still have an amount due. */
+  unpaidCount: number;
+  /** Total amount of rejected submissions (part of totalBilled). */
+  rejectedBilled: number;
+  /** Amount paid on rejected submissions, to be refunded. */
+  refunded: number;
+  /** Collected ÷ (collected + due), 0–1; null when nothing live was billed. */
   collectionRate: number | null;
 };
 
@@ -78,8 +86,14 @@ export type DashboardSummary = {
   byStatus: { status: SubmissionStatus; count: number }[];
   /** V2. Daily for ranges up to 92 days, monthly otherwise; empty periods are 0. */
   overTime: { granularity: 'day' | 'month'; points: { period: string; count: number }[] };
-  /** V3. One row per month (YYYY-MM). */
-  billingByMonth: { month: string; billed: number; collected: number; pending: number }[];
+  /** V3. One row per month (YYYY-MM). Billed includes rejected; refunded is paid on rejected. */
+  billingByMonth: {
+    month: string;
+    billed: number;
+    collected: number;
+    pending: number;
+    refunded: number;
+  }[];
   /** V4 */
   byResult: { result: TestResult; count: number }[];
   /** V5 */
