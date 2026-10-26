@@ -6,6 +6,7 @@ import { listAgentOptions } from '@/api/agents.api';
 import { listSubmissions } from '@/api/submissions.api';
 import { SORT_OPTIONS, type FilterValues } from '@/features/submissions/listFilters';
 import { SubmissionFilters } from '@/features/submissions/SubmissionFilters';
+import { RefundBadge } from '@/features/submissions/RefundBadge';
 import { StatusBadge } from '@/features/submissions/StatusBadge';
 import { Pagination } from '@/components/ui/Pagination';
 import { useAuth } from '@/hooks/useAuth';
@@ -157,7 +158,16 @@ export function SubmissionListPage() {
                       {submission.totalAmount === null ? '—' : formatRupees(submission.totalAmount)}
                     </td>
                     <td className="text-right whitespace-nowrap">
-                      {submission.amountDue === null ? '—' : formatRupees(submission.amountDue)}
+                      {/* Nothing is due on a rejected submission; money paid is refunded. */}
+                      {submission.status === 'REJECTED' ? (
+                        <>
+                          {submission.amountPaid > 0 && <RefundBadge className="badge-sm mr-1" />}—
+                        </>
+                      ) : submission.amountDue === null ? (
+                        '—'
+                      ) : (
+                        formatRupees(submission.amountDue)
+                      )}
                     </td>
                     <td>
                       <StatusBadge status={submission.status} className="badge-sm" />
