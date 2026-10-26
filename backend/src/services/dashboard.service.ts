@@ -103,6 +103,8 @@ export async function getSummary(
   for (const row of statusRows) statusCounts[row.status as SubmissionStatus] = row.count;
   const total = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
 
+  const liveBilled = money.collected + money.due;
+
   // --- The period covered by the time charts -----------------------------------------------
   // From the "from" filter (or the first submission) to the "to" filter (or today), never
   // past today, so the line doesn't run on into empty future days.
@@ -192,7 +194,10 @@ export async function getSummary(
       totalBilled: round2(money.billed),
       totalCollected: round2(money.collected),
       pendingDue: round2(money.due),
-      collectionRate: money.billed > 0 ? money.collected / money.billed : null,
+      unpaidCount: money.unpaidCount,
+      rejectedBilled: round2(money.rejectedBilled),
+      refunded: round2(money.refunded),
+      collectionRate: liveBilled > 0 ? money.collected / liveBilled : null,
     },
     byStatus: SUBMISSION_STATUSES.map((status) => ({ status, count: statusCounts[status] })),
     overTime: {
@@ -206,6 +211,7 @@ export async function getSummary(
         billed: round2(row?.billed ?? 0),
         collected: round2(row?.collected ?? 0),
         pending: round2(row?.pending ?? 0),
+        refunded: round2(row?.refunded ?? 0),
       };
     }),
     byResult: TEST_RESULTS.map((result) => ({ result, count: resultCounts[result] })),
