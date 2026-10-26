@@ -37,7 +37,11 @@ function whereClause(scope: DashboardScope, query: DashboardQuery, extra: Prisma
   return Prisma.sql`WHERE ${Prisma.join([...conditions, ...extra], ' AND ')}`;
 }
 
-const notRejected = Prisma.sql`s.status <> 'REJECTED'`;
+// Billed counts every submission, rejected ones too, so it never shrinks when a sample is
+// rejected. Collected and due count only live submissions; money paid on a rejected one is
+// reported as refunded. So billed = collected + due + rejected billed.
+const live = Prisma.sql`FILTER (WHERE s.status <> 'REJECTED')`;
+const rejected = Prisma.sql`FILTER (WHERE s.status = 'REJECTED')`;
 
 export function countByStatus(scope: DashboardScope, query: DashboardQuery) {
   return prisma.$queryRaw<{ status: string; count: number }[]>`
@@ -47,12 +51,24 @@ export function countByStatus(scope: DashboardScope, query: DashboardQuery) {
 }
 
 export async function moneyTotals(scope: DashboardScope, query: DashboardQuery) {
-  const [row] = await prisma.$queryRaw<{ billed: number; collected: number; due: number }[]>`
+  const [row] = await prisma.$queryRaw<
+    {
+      billed: number;
+      collected: number;
+      due: number;
+      rejectedBilled: number;
+      refunded: number;
+      unpaidCount: number;
+    }[]
+  >`
     SELECT coalesce(sum(s.total_amount), 0)::float8 AS billed,
-           coalesce(sum(s.amount_paid), 0)::float8 AS collected,
-           coalesce(sum(s.amount_due), 0)::float8 AS due
-    ${FROM} ${whereClause(scope, query, [notRejected])}`;
-  return row ?? { billed: 0, collected: 0, due: 0 };
+           coalesce(sum(s.amount_paid) ${live}, 0)::float8 AS collected,
+           coalesce(sum(s.amount_due) ${live}, 0)::float8 AS due,
+           coalesce(sum(s.total_amount) ${rejected}, 0)::float8 AS "rejectedBilled",
+           coalesce(sum(s.amount_paid) ${rejected}, 0)::float8 AS refunded,
+           count(*) FILTER (WHERE s.status <> 'REJECTED' AND s.amount_due > 0)::int AS "unpaidCount"
+    ${FROM} ${whereClause(scope, query)}`;
+  return row ?? { billed: 0, collected: 0, due: 0, rejectedBilled: 0, refunded: 0, unpaidCount: 0 };
 }
 
 /** Submissions per IST day (YYYY-MM-DD). The service fills empty days and may group by month. */
@@ -64,12 +80,15 @@ export function countByDay(scope: DashboardScope, query: DashboardQuery) {
 }
 
 export function billingByMonth(scope: DashboardScope, query: DashboardQuery) {
-  return prisma.$queryRaw<{ month: string; billed: number; collected: number; pending: number }[]>`
+  return prisma.$queryRaw<
+    { month: string; billed: number; collected: number; pending: number; refunded: number }[]
+  >`
     SELECT to_char(s.created_at AT TIME ZONE ${TIME_ZONE}, 'YYYY-MM') AS month,
            coalesce(sum(s.total_amount), 0)::float8 AS billed,
-           coalesce(sum(s.amount_paid), 0)::float8 AS collected,
-           coalesce(sum(s.amount_due), 0)::float8 AS pending
-    ${FROM} ${whereClause(scope, query, [notRejected])}
+           coalesce(sum(s.amount_paid) ${live}, 0)::float8 AS collected,
+           coalesce(sum(s.amount_due) ${live}, 0)::float8 AS pending,
+           coalesce(sum(s.amount_paid) ${rejected}, 0)::float8 AS refunded
+    ${FROM} ${whereClause(scope, query)}
     GROUP BY 1 ORDER BY 1`;
 }
 

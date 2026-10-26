@@ -18,6 +18,7 @@ import {
 import { dateRangeFor, isDatePreset } from '@/features/dashboard/datePresets';
 import { StatCard } from '@/features/dashboard/StatCard';
 import { useChartTheme } from '@/features/dashboard/useChartTheme';
+import { RefundBadge } from '@/features/submissions/RefundBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useUrlParams } from '@/hooks/useUrlParams';
 import { formatRupeesWhole, formatTime } from '@/lib/format';
@@ -181,22 +182,32 @@ export function DashboardPage() {
                 label={label}
                 value={count.toLocaleString('en-IN')}
                 color={theme.status[status]}
-                detail={status === 'NOT_FILLED_COMPLETELY' ? 'Sent back to the agent' : undefined}
+                detail={
+                  status === 'NOT_FILLED_COMPLETELY' ? (
+                    'Sent back to the agent'
+                  ) : status === 'REJECTED' ? (
+                    <span className="flex flex-wrap items-center gap-1">
+                      {formatRupeesWhole(data.cards.rejectedBilled)} billed ·{' '}
+                      <RefundBadge className="badge-xs" />
+                      {formatRupeesWhole(data.cards.refunded)} refunded
+                    </span>
+                  ) : undefined
+                }
                 to={listLink(status)}
               />
             ))}
             <StatCard
               label="Total billed"
               value={formatRupeesWhole(data.cards.totalBilled)}
-              detail={`${formatRupeesWhole(data.cards.totalCollected)} collected`}
+              detail={`${formatRupeesWhole(data.cards.totalCollected)} collected · ${formatRupeesWhole(data.cards.pendingDue)} due · ${formatRupeesWhole(data.cards.rejectedBilled)} rejected`}
             />
             <StatCard
               label="Pending due"
               value={formatRupeesWhole(data.cards.pendingDue)}
               detail={
-                data.cards.collectionRate === null
-                  ? 'Nothing billed yet'
-                  : `${Math.round(data.cards.collectionRate * 100)}% collected`
+                data.cards.unpaidCount === 0
+                  ? 'Nothing left to collect'
+                  : `From ${data.cards.unpaidCount.toLocaleString('en-IN')} unpaid ${data.cards.unpaidCount === 1 ? 'submission' : 'submissions'}`
               }
             />
           </section>
@@ -219,8 +230,9 @@ export function DashboardPage() {
             <BreakdownChart summary={data} />
           </section>
           <p className="text-base-content/60 text-xs">
-            Money totals leave out rejected submissions. Dates are whole days in Indian Standard
-            Time. The page refreshes every {REFRESH_MS / 1000} seconds while it is open.
+            Total billed includes rejected samples; money paid on them is shown as refunded, not
+            collected. Dates are whole days in Indian Standard Time. The page refreshes every{' '}
+            {REFRESH_MS / 1000} seconds while it is open.
           </p>
         </div>
       )}

@@ -5,6 +5,8 @@ type Props = Partial<TooltipContentProps<number, string>> & {
   formatValue?: (value: number) => string;
   /** Formats the heading (e.g. a date). Defaults to the label as given. */
   formatLabel?: (label: string) => string;
+  /** An extra line under the series, from the hovered data row (e.g. "₹500 refunded"). */
+  note?: (row: never) => string | undefined;
 };
 
 /**
@@ -17,9 +19,11 @@ export function ChartTooltip({
   label,
   formatValue = (value) => value.toLocaleString('en-IN'),
   formatLabel = (value) => value,
+  note,
 }: Props) {
   if (!active || !payload?.length) return null;
   const heading = label ?? payload[0]?.name;
+  const noteText = note?.(payload[0]?.payload as never);
 
   return (
     <div className="bg-base-100 border-base-300 rounded-box border px-3 py-2 text-sm shadow-md">
@@ -39,6 +43,7 @@ export function ChartTooltip({
           </li>
         ))}
       </ul>
+      {noteText && <p className="text-base-content/70 mt-1 text-xs">{noteText}</p>}
     </div>
   );
 }

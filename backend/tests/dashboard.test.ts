@@ -30,16 +30,25 @@ async function summary(client: TestAgent, query: Record<string, string> = {}) {
   return res.body.data as DashboardSummary;
 }
 
-/** The expected numbers, computed separately with Prisma instead of the dashboard's SQL. */
+/**
+ * The expected numbers, computed separately with Prisma instead of the dashboard's SQL.
+ * Billed counts every submission; collected and due only non-rejected ones; money paid on
+ * rejected ones is refunded.
+ */
 async function expected(where: Prisma.SubmissionWhereInput) {
-  const notRejected = { ...where, status: { not: 'REJECTED' as const } };
-  const [total, byStatus, money] = await Promise.all([
+  // AND keeps any status filter in `where` while adding the rejected / not rejected split.
+  const live = { AND: [where, { status: { not: 'REJECTED' as const } }] };
+  const rejected = { AND: [where, { status: 'REJECTED' as const }] };
+  const [total, byStatus, all, liveMoney, rejectedMoney, unpaid] = await Promise.all([
     prisma.submission.count({ where }),
     prisma.submission.groupBy({ by: ['status'], where, _count: true }),
+    prisma.submission.aggregate({ where, _sum: { totalAmount: true } }),
+    prisma.submission.aggregate({ where: live, _sum: { amountPaid: true, amountDue: true } }),
     prisma.submission.aggregate({
-      where: notRejected,
-      _sum: { totalAmount: true, amountPaid: true, amountDue: true },
+      where: rejected,
+      _sum: { totalAmount: true, amountPaid: true },
     }),
+    prisma.submission.count({ where: { AND: [live, { amountDue: { gt: 0 } }] } }),
   ]);
   const count = (status: string) => byStatus.find((row) => row.status === status)?._count ?? 0;
   return {
@@ -47,9 +56,12 @@ async function expected(where: Prisma.SubmissionWhereInput) {
     completed: count('COMPLETED'),
     rejected: count('REJECTED'),
     needsInfo: count('NOT_FILLED_COMPLETELY'),
-    billed: money._sum.totalAmount?.toNumber() ?? 0,
-    collected: money._sum.amountPaid?.toNumber() ?? 0,
-    due: money._sum.amountDue?.toNumber() ?? 0,
+    billed: all._sum.totalAmount?.toNumber() ?? 0,
+    collected: liveMoney._sum.amountPaid?.toNumber() ?? 0,
+    due: liveMoney._sum.amountDue?.toNumber() ?? 0,
+    rejectedBilled: rejectedMoney._sum.totalAmount?.toNumber() ?? 0,
+    refunded: rejectedMoney._sum.amountPaid?.toNumber() ?? 0,
+    unpaid,
   };
 }
 
@@ -100,7 +112,10 @@ describe('agent dashboard', () => {
     expect(data.cards.totalBilled).toBeCloseTo(want.billed, 2);
     expect(data.cards.totalCollected).toBeCloseTo(want.collected, 2);
     expect(data.cards.pendingDue).toBeCloseTo(want.due, 2);
-    expect(data.cards.collectionRate).toBeCloseTo(want.collected / want.billed, 6);
+    expect(data.cards.rejectedBilled).toBeCloseTo(want.rejectedBilled, 2);
+    expect(data.cards.refunded).toBeCloseTo(want.refunded, 2);
+    expect(data.cards.unpaidCount).toBe(want.unpaid);
+    expect(data.cards.collectionRate).toBeCloseTo(want.collected / (want.collected + want.due), 6);
   });
 
   it('keeps every chart consistent with the cards', async () => {
@@ -207,12 +222,18 @@ describe('admin: several agents', () => {
 });
 
 describe('filters', () => {
-  it('leaves rejected submissions out of the money totals', async () => {
+  it('bills rejected submissions but counts money paid on them as refunded', async () => {
     const data = await summary(admin, { status: 'REJECTED' });
     const want = await expected({ agent: { adminId }, status: 'REJECTED' });
+    expect(want.total).toBeGreaterThan(0);
     expect(data.cards.rejected).toBe(want.total);
     expect(data.cards.totalSubmissions).toBe(want.total);
-    expect(data.cards.totalBilled).toBe(0);
+    expect(data.cards.totalBilled).toBeCloseTo(want.rejectedBilled, 2);
+    expect(data.cards.rejectedBilled).toBeCloseTo(want.rejectedBilled, 2);
+    expect(data.cards.refunded).toBeCloseTo(want.refunded, 2);
+    expect(data.cards.totalCollected).toBe(0);
+    expect(data.cards.pendingDue).toBe(0);
+    expect(data.cards.unpaidCount).toBe(0);
     expect(data.cards.collectionRate).toBeNull();
   });
 
@@ -258,6 +279,32 @@ describe('filters', () => {
       billed: 0,
       collected: 0,
       pending: 0,
+      refunded: 0,
     });
+  });
+});
+
+describe('money', () => {
+  it('splits total billed into collected, due and rejected, matching independent sums', async () => {
+    const data = await summary(admin);
+    const want = await expected({ agent: { adminId } });
+    const { totalBilled, totalCollected, pendingDue, rejectedBilled, refunded } = data.cards;
+
+    expect(want.rejected).toBeGreaterThan(0);
+    expect(totalBilled).toBeCloseTo(want.billed, 2);
+    expect(totalCollected).toBeCloseTo(want.collected, 2);
+    expect(pendingDue).toBeCloseTo(want.due, 2);
+    expect(rejectedBilled).toBeCloseTo(want.rejectedBilled, 2);
+    expect(refunded).toBeCloseTo(want.refunded, 2);
+    expect(data.cards.unpaidCount).toBe(want.unpaid);
+    expect(totalBilled).toBeCloseTo(totalCollected + pendingDue + rejectedBilled, 2);
+
+    // The monthly chart adds up to the same figures.
+    const sum = (key: 'billed' | 'collected' | 'pending' | 'refunded') =>
+      data.billingByMonth.reduce((total, row) => total + row[key], 0);
+    expect(sum('billed')).toBeCloseTo(totalBilled, 2);
+    expect(sum('collected')).toBeCloseTo(totalCollected, 2);
+    expect(sum('pending')).toBeCloseTo(pendingDue, 2);
+    expect(sum('refunded')).toBeCloseTo(refunded, 2);
   });
 });
