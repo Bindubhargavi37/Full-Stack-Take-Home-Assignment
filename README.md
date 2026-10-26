@@ -233,7 +233,7 @@ How it is enforced: every protected route runs `authenticate` (verifies the acce
 
 One endpoint, `GET /api/v1/dashboard/summary`, returns everything the page shows. It is computed with SQL `GROUP BY` queries for the caller's scope; the browser never receives raw rows to filter.
 
-- **Cards:** total submissions, Completed, Payment Done, Payment Pending, Rejected, Needs info (sent back), Total billed (with amount collected), Pending due (with collection rate)
+- **Cards:** total submissions, Completed, Payment Done, Payment Pending, Rejected, Needs info (sent back), Total billed (split into collected, due and rejected), Pending due (with how many submissions still owe money); the Rejected card also shows the amount billed on rejected samples and the amount refunded
 - **Charts:** submissions by status, submissions over time, billed vs collected vs pending per month, test results, sample condition, condition vs result, top locations, and either order sizes (one agent) or agents by status (several or all agents). Each chart has a table view and can be enlarged.
 - **Filters:** date range (presets or custom), status, and for admins any number of agents. Filters are kept in the URL.
 - **Refresh:** automatically every 30 seconds while the tab is visible, plus a Refresh button and an "Updated" time.
@@ -326,7 +326,7 @@ Render's free plan puts a service to sleep after 15 minutes without traffic. To 
 - **Agents cannot delete submissions**, and Completed / Rejected are final, so the history stays complete.
 - **Agents are created by admins** (there is no sign-up). The admin account itself is created only by the seed.
 - **Form fields:** customer name, location, total amount, amount paid, sample condition and test result are required; customer phone, customer email, collected-on date and remarks are optional. The amount due is calculated by the database (`total − paid`) and never sent by the client.
-- **Money** is in Indian rupees (₹) with two decimals. Dashboard money totals leave out rejected submissions.
+- **Money** is in Indian rupees (₹) with two decimals. Total billed includes rejected samples, so it never drops when a sample is rejected; money paid on them is shown as refunded, not collected. Collected and Pending due count only non-rejected submissions, so Total billed = Collected + Pending due + Rejected billed, and the API's `collectionRate` is Collected ÷ (Collected + Pending due). In the submissions list a rejected row shows no amount due (with a Refund badge when money was paid).
 - **Dates and times** are in Indian Standard Time (IST): date filters and charts use whole IST days, and dates are shown as dd/mm/yyyy.
 - **Reference numbers** are shown as `SUB-000001` (stored as an auto-increment integer).
 - **Deployment:** optional in the brief; see [Deployment](#deployment) for the free Render + Neon setup. The README remains the main way to run the app.
