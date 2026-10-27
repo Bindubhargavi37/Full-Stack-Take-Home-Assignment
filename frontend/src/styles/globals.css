@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+
+/* daisyUI themes offered in the theme picker (see shared/src/constants/themes.ts). */
+@plugin 'daisyui' {
+  themes:
+    light,
+    dark --prefersdark,
+    corporate --default,
+    emerald,
+    cupcake,
+    dracula;
+}
+
+/*
+ * The app's main look: a pastel beige palette. It replaces daisyUI's built-in "light" theme,
+ * ("Pastel beige" in the picker; also what "System" uses on a light-mode computer).
+ * Every text/background pair has a contrast of at least 4.5:1 (WCAG AA).
+ */
+@plugin 'daisyui/theme' {
+  name: 'light';
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  /* Warm cream surfaces, from page background (100) to borders (300). */
+  --color-base-100: #fbf7f0;
+  --color-base-200: #f3ebdf;
+  --color-base-300: #e6d9c6;
+  --color-base-content: #3d3530;
+
+  /* Soft caramel: buttons, links, active menu item. */
+  --color-primary: #d9b48f;
+  --color-primary-content: #3b2a1c;
+  /* Pastel peach. */
+  --color-secondary: #efc7b5;
+  --color-secondary-content: #4a2c22;
+  /* Sage green. */
+  --color-accent: #b7c4a1;
+  --color-accent-content: #2b3522;
+  /* Warm taupe for neutral elements. */
+  --color-neutral: #7a6a5a;
+  --color-neutral-content: #fbf7f0;
+
+  /* Status colours. Info and warning stay pastel (used as backgrounds only). Success and
+     error are also used as text (form errors, the password checklist), so they are deeper
+     shades that stay readable on the cream background. */
+  --color-info: #a9c9d8;
+  --color-info-content: #1f3a47;
+  --color-success: #4a6b3d;
+  --color-success-content: #fbf7f0;
+  --color-warning: #ecd08a;
+  --color-warning-content: #46360e;
+  --color-error: #b04a46;
+  --color-error-content: #fffaf5;
+
+  --radius-selector: 1rem;
+  --radius-field: 0.625rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* In the beige theme, highlight the active menu item in caramel instead of dark taupe. */
+[data-theme='light'] .menu .menu-active {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
