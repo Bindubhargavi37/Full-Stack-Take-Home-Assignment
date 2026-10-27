@@ -160,15 +160,6 @@ Completed and Rejected are final. Every rule is checked on the server, not just 
 
 ---
 
-## Git workflow
-
-- `main` is the release branch and is protected: changes only through a pull request, the CI check must pass, and force pushes and deletion are blocked.
-- `dev` is the integration branch. Each change is made on a short-lived `feature/*` (or `docs/*`, `chore/*`) branch and merged into `dev` through a pull request; `dev` is then released to `main` through a pull request.
-- Commits follow Conventional Commits (`feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`).
-- GitHub Actions runs lint, format check, typecheck, tests and build on every pull request.
-
----
-
 ## Assumptions & notes
 
 - **"Not Filled Completely"** means the admin sent the form back; the agent fixes and resubmits it.
