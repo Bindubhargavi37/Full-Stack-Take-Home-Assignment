@@ -141,35 +141,22 @@ These are demo values only, created by `npm run db:seed`; never use them for rea
 
 ---
 
-## Status rules
+## Statuses, roles & permissions
 
-Every form has exactly one status. Users don't pick a status directly: they take an action, and the server sets the status.
+Every form has exactly one status. Users don't pick a status: they take an action, and the server sets the new status.
 
-| From | To | Who |
-| --- | --- | --- |
-| New form, amount still due | Billing – Payment Not Done | Agent |
-| New form, fully paid | Billing – Payment Done | Agent |
-| Payment Not Done | Payment Done (when the amount due reaches 0) | Agent (own forms) or Admin |
-| Payment Not Done / Done | Not Filled Completely (sent back with a note) | Admin |
-| Not Filled Completely | Payment Not Done / Done (after the agent resubmits) | Agent (own forms) |
-| Payment Done | Completed | Admin |
-| Payment Not Done / Done / Not Filled Completely | Rejected (with a reason) | Admin |
-| Completed or Rejected | No further changes | - |
+| Action | Agent | Admin | Status change |
+| --- | --- | --- | --- |
+| Submit a form | Yes | No | New → Payment Not Done, or Payment Done if fully paid |
+| Record a payment | Own forms | Their agents' forms | Payment Not Done → Payment Done once fully paid |
+| Complete | No | Yes | Payment Done → Completed |
+| Send back (with a note) | No | Yes | Payment Not Done / Done → Not Filled Completely |
+| Fix and resubmit | Own forms | No | Not Filled Completely → Payment Not Done / Done |
+| Reject (with a reason) | No | Yes | Payment Not Done / Done / Not Filled Completely → Rejected |
+| See submissions and dashboard | Own only | Their agents' (one, several or all) | - |
+| Manage agents | No | Yes | - |
 
----
-
-## Roles & permissions
-
-| What | Agent | Admin |
-| --- | --- | --- |
-| Submit forms | Yes | No |
-| Edit and resubmit a form that was sent back | Own forms | No |
-| See submissions and dashboard | Own only | Their agents' (one, several or all) |
-| Record payments | Own forms | Their agents' forms |
-| Complete, send back or reject a form | No | Yes |
-| Manage agents | No | Yes |
-
-Every rule is checked on the server, not just hidden in the UI: even if someone edits the page's JavaScript to show a hidden button, the server still refuses the request. A form outside your access returns 404, so ids reveal nothing.
+Completed and Rejected are final. Every rule is checked on the server, not just hidden in the UI: even if someone edits the page's JavaScript to show a hidden button, the server still refuses the request. A form outside your access returns 404, so ids reveal nothing.
 
 ---
 
