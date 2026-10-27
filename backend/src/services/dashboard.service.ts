@@ -195,6 +195,7 @@ export async function getSummary(
       totalCollected: round2(money.collected),
       pendingDue: round2(money.due),
       unpaidCount: money.unpaidCount,
+      unpaidNeedsInfo: money.unpaidNeedsInfo,
       rejectedBilled: round2(money.rejectedBilled),
       refunded: round2(money.refunded),
       collectionRate: liveBilled > 0 ? money.collected / liveBilled : null,
