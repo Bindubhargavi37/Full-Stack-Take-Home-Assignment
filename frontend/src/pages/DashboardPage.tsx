@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
-import { STATUS_LABELS, type SubmissionStatus } from 'shared';
+import { STATUS_LABELS, type DashboardCards, type SubmissionStatus } from 'shared';
 import { listAgentOptions } from '@/api/agents.api';
 import { getDashboardSummary } from '@/api/dashboard.api';
 import { BillingChart } from '@/features/dashboard/charts/BillingChart';
@@ -35,6 +35,26 @@ const URL_KEYS: Record<keyof DashboardFilterValues, string> = {
   status: 'status',
   agentIds: 'agentIds',
 };
+
+/** Pending due's second line: how many submissions owe money, and in which status. */
+function UnpaidSplit({ cards }: { cards: DashboardCards }) {
+  const { unpaidCount, unpaidNeedsInfo } = cards;
+  if (unpaidCount === 0) return 'Nothing left to collect';
+  const paymentPending = unpaidCount - unpaidNeedsInfo;
+  const count = (value: number) => value.toLocaleString('en-IN');
+  const split =
+    unpaidNeedsInfo === 0
+      ? 'All payment pending'
+      : paymentPending === 0
+        ? 'All needs info'
+        : `${count(paymentPending)} payment pending · ${count(unpaidNeedsInfo)} needs info`;
+  return (
+    <>
+      From {count(unpaidCount)} unpaid {unpaidCount === 1 ? 'submission' : 'submissions'}
+      <span className="block">{split}</span>
+    </>
+  );
+}
 
 /**
  * One page for both roles. Agents see their own numbers; admins see all their agents combined,
@@ -204,11 +224,7 @@ export function DashboardPage() {
             <StatCard
               label="Pending due"
               value={formatRupeesWhole(data.cards.pendingDue)}
-              detail={
-                data.cards.unpaidCount === 0
-                  ? 'Nothing left to collect'
-                  : `From ${data.cards.unpaidCount.toLocaleString('en-IN')} unpaid ${data.cards.unpaidCount === 1 ? 'submission' : 'submissions'}`
-              }
+              detail={<UnpaidSplit cards={data.cards} />}
             />
           </section>
 

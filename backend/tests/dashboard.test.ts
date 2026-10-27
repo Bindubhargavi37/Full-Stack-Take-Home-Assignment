@@ -39,17 +39,21 @@ async function expected(where: Prisma.SubmissionWhereInput) {
   // AND keeps any status filter in `where` while adding the rejected / not rejected split.
   const live = { AND: [where, { status: { not: 'REJECTED' as const } }] };
   const rejected = { AND: [where, { status: 'REJECTED' as const }] };
-  const [total, byStatus, all, liveMoney, rejectedMoney, unpaid] = await Promise.all([
-    prisma.submission.count({ where }),
-    prisma.submission.groupBy({ by: ['status'], where, _count: true }),
-    prisma.submission.aggregate({ where, _sum: { totalAmount: true } }),
-    prisma.submission.aggregate({ where: live, _sum: { amountPaid: true, amountDue: true } }),
-    prisma.submission.aggregate({
-      where: rejected,
-      _sum: { totalAmount: true, amountPaid: true },
-    }),
-    prisma.submission.count({ where: { AND: [live, { amountDue: { gt: 0 } }] } }),
-  ]);
+  const [total, byStatus, all, liveMoney, rejectedMoney, unpaid, unpaidNeedsInfo] =
+    await Promise.all([
+      prisma.submission.count({ where }),
+      prisma.submission.groupBy({ by: ['status'], where, _count: true }),
+      prisma.submission.aggregate({ where, _sum: { totalAmount: true } }),
+      prisma.submission.aggregate({ where: live, _sum: { amountPaid: true, amountDue: true } }),
+      prisma.submission.aggregate({
+        where: rejected,
+        _sum: { totalAmount: true, amountPaid: true },
+      }),
+      prisma.submission.count({ where: { AND: [live, { amountDue: { gt: 0 } }] } }),
+      prisma.submission.count({
+        where: { AND: [where, { status: 'NOT_FILLED_COMPLETELY', amountDue: { gt: 0 } }] },
+      }),
+    ]);
   const count = (status: string) => byStatus.find((row) => row.status === status)?._count ?? 0;
   return {
     total,
@@ -62,6 +66,7 @@ async function expected(where: Prisma.SubmissionWhereInput) {
     rejectedBilled: rejectedMoney._sum.totalAmount?.toNumber() ?? 0,
     refunded: rejectedMoney._sum.amountPaid?.toNumber() ?? 0,
     unpaid,
+    unpaidNeedsInfo,
   };
 }
 
@@ -234,6 +239,7 @@ describe('filters', () => {
     expect(data.cards.totalCollected).toBe(0);
     expect(data.cards.pendingDue).toBe(0);
     expect(data.cards.unpaidCount).toBe(0);
+    expect(data.cards.unpaidNeedsInfo).toBe(0);
     expect(data.cards.collectionRate).toBeNull();
   });
 
@@ -297,6 +303,9 @@ describe('money', () => {
     expect(rejectedBilled).toBeCloseTo(want.rejectedBilled, 2);
     expect(refunded).toBeCloseTo(want.refunded, 2);
     expect(data.cards.unpaidCount).toBe(want.unpaid);
+    expect(data.cards.unpaidNeedsInfo).toBe(want.unpaidNeedsInfo);
+    // Every Payment pending submission owes money, so the rest of the unpaid count is exactly them.
+    expect(data.cards.unpaidCount - data.cards.unpaidNeedsInfo).toBe(data.cards.paymentPending);
     expect(totalBilled).toBeCloseTo(totalCollected + pendingDue + rejectedBilled, 2);
 
     // The monthly chart adds up to the same figures.
