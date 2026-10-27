@@ -171,14 +171,9 @@ Completed and Rejected are final. Every rule is checked on the server, not just 
 
 ## Assumptions & notes
 
-- **"Not Filled Completely" means sent back.** Forms are always saved complete. This status means the admin sent the form back for missing or wrong information, and the agent fixes and resubmits it.
-- **Only agents submit forms.** The brief made this optional for admins; admins review forms and manage agents.
-- **Forms can't be deleted**, and Completed and Rejected are final.
-- **There is no sign-up.** Admins create agents; the admin account comes from the demo data.
-- **Every agent belongs to exactly one admin**, and an admin only ever sees their own agents. The design already supports several admins.
-- **Deactivating an agent keeps their forms.** Nothing is hard-deleted; a deactivated agent is blocked from their very next request.
-- **Money** is in Indian rupees (₹) with two decimals, stored as exact decimals (never floating point). Amount due = total amount − amount paid, calculated by the database. Money paid on a rejected form is shown as refunded, not collected.
-- **Dates** use Indian Standard Time and are shown as dd/mm/yyyy.
-- **Hosting:** the live demo runs on Render with a Neon PostgreSQL database.
-- **Background job:** one job, keep-alive (`backend/src/jobs/keepAlive.ts`). Every 14 minutes it calls the app's own `/api/v1/health`, so Render's free plan doesn't put the service to sleep. It runs only when there is a public URL: `KEEP_ALIVE_URL`, or else `RENDER_EXTERNAL_URL`, which Render sets automatically. Locally and in tests neither is set, so it is off.
-- **Dependencies:** run `npm audit` to check them. At the time of writing it reports issues only in tools (the Prisma command-line tool and the esbuild copy used to build the backend), which don't run while the app serves requests.
+- **"Not Filled Completely"** means the admin sent the form back; the agent fixes and resubmits it.
+- **Only agents submit forms.** There is no sign-up: admins create agents.
+- **Each agent belongs to one admin.** Forms are never deleted, and deactivating an agent keeps their forms.
+- **Money** is in ₹ with two decimals. Amount due = total − paid. Money paid on a rejected form is shown as refunded.
+- **Dates** are in Indian Standard Time (dd/mm/yyyy).
+- **Hosting:** Render with a Neon PostgreSQL database. A keep-alive job pings `/api/v1/health` every 14 minutes so the free service doesn't sleep; it is off locally.
