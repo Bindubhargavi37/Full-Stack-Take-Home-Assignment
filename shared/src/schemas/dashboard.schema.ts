@@ -66,6 +66,11 @@ export type DashboardCards = {
   pendingDue: number;
   /** Non-rejected submissions that still have an amount due. */
   unpaidCount: number;
+  /**
+   * The part of unpaidCount sent back to the agent (Needs info) before being fully paid. The rest
+   * is Payment pending, which always has money due.
+   */
+  unpaidNeedsInfo: number;
   /** Total amount of rejected submissions (part of totalBilled). */
   rejectedBilled: number;
   /** Amount paid on rejected submissions, to be refunded. */

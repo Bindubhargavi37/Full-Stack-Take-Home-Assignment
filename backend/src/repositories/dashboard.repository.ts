@@ -59,6 +59,7 @@ export async function moneyTotals(scope: DashboardScope, query: DashboardQuery) 
       rejectedBilled: number;
       refunded: number;
       unpaidCount: number;
+      unpaidNeedsInfo: number;
     }[]
   >`
     SELECT coalesce(sum(s.total_amount), 0)::float8 AS billed,
@@ -66,9 +67,21 @@ export async function moneyTotals(scope: DashboardScope, query: DashboardQuery) 
            coalesce(sum(s.amount_due) ${live}, 0)::float8 AS due,
            coalesce(sum(s.total_amount) ${rejected}, 0)::float8 AS "rejectedBilled",
            coalesce(sum(s.amount_paid) ${rejected}, 0)::float8 AS refunded,
-           count(*) FILTER (WHERE s.status <> 'REJECTED' AND s.amount_due > 0)::int AS "unpaidCount"
+           count(*) FILTER (WHERE s.status <> 'REJECTED' AND s.amount_due > 0)::int AS "unpaidCount",
+           count(*) FILTER (WHERE s.status = 'NOT_FILLED_COMPLETELY' AND s.amount_due > 0)::int
+             AS "unpaidNeedsInfo"
     ${FROM} ${whereClause(scope, query)}`;
-  return row ?? { billed: 0, collected: 0, due: 0, rejectedBilled: 0, refunded: 0, unpaidCount: 0 };
+  return (
+    row ?? {
+      billed: 0,
+      collected: 0,
+      due: 0,
+      rejectedBilled: 0,
+      refunded: 0,
+      unpaidCount: 0,
+      unpaidNeedsInfo: 0,
+    }
+  );
 }
 
 /** Submissions per IST day (YYYY-MM-DD). The service fills empty days and may group by month. */
