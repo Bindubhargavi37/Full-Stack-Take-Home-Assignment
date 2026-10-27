@@ -9,8 +9,8 @@ services:
     plan: free
     # Same AWS region as the Neon database (us-east-2), so every query stays fast.
     region: ohio
-    # Switch to main after the dev → main release.
-    branch: dev
+    # The release branch: dev is released here through pull requests.
+    branch: main
     autoDeploy: true
     # Dev dependencies are needed to build (Vite, TypeScript, tsup, Prisma CLI). Migrations run on
     # every deploy, so new ones reach the live database automatically; the build fails (and the
